@@ -16,7 +16,7 @@ from entry import *
 
 
 def sanitize_config(config):
-    required_params = ['showmap_command', 'entry_dirs', 'showmap_output', 'output_dir', 'entry_name_pattern',
+    required_params = ['showmap_command', 'showmap_output', 'output_dir', 'entry_name_pattern',
                        'start_time', 'bucket']
 
     valid_buckets = ['second', 'minute', 'hour', 'sec', 'min', 'hour', 's', 'm', 'h']
@@ -26,7 +26,15 @@ def sanitize_config(config):
             danger("%s is missing in the config file" % param)
             return False
 
-    if len(config['entry_dirs']) == 0:
+    entry_dir_pattern = 'entry_dirs_.+'
+
+    entry_groups = []
+
+    for param in config:
+        if re.fullmatch(entry_dir_pattern, param) is not None:
+            entry_groups.append(param)
+
+    if len(entry_groups) == 0:
         danger("No entry directory specified")
         return False
 
@@ -38,6 +46,8 @@ def sanitize_config(config):
     # some amendments to config
     if not config['output_dir'].endswith('/'):
         config['output_dir'] += '/'
+
+    config['entry_groups'] = entry_groups
 
     return True
 
@@ -77,83 +87,100 @@ def main():
         elif bucket.lower() in ['second', 'sec', 's']:
             bucket_margin = 1
 
-        covered_edges = set()
+        # key: entry group name, value: edge_no_dict
+        entry_group_dict = {}
 
-        entries = []
+        entry_groups = config['entry_groups']
 
-        # key: bin_no, value: count
-        edge_no_dict = {}
+        for entry_group in entry_groups:
+            group_name = entry_group.replace('entry_dirs_', '')
+            entry_dirs = config[entry_group]
 
-        # collect entry files first
-        for entry_dir in config['entry_dirs']:
-            entry_files = os.listdir(entry_dir)
+            covered_edges = set()
 
-            for entry_file in entry_files:
-                # we only check the fuzzer output file
-                if re.fullmatch(config['entry_name_pattern'], entry_file) is not None:
-                    entry_file = entry_dir + '/' + entry_file
+            entries = []
 
-                    entry_mtime = int(os.stat(entry_file).st_mtime)
+            # key: bin_no, value: count
+            edge_no_dict = {}
 
-                    bin_no = int((entry_mtime - start_time)/bucket_margin)
+            # collect entry files first
+            for entry_dir in entry_dirs:
+                entry_files = os.listdir(entry_dir)
 
-                    entry = Entry(entry_file, entry_mtime, bin_no)
+                for entry_file in entry_files:
+                    # we only check the fuzzer output file
+                    for pattern in config['entry_name_pattern']:
+                        if re.fullmatch(pattern, entry_file) is not None:
+                            entry_file = entry_dir + '/' + entry_file
 
-                    entries.append(entry)
+                            entry_mtime = int(os.stat(entry_file).st_mtime)
 
-        # sort the entry file list according to creation time
-        entries.sort(key=lambda x: x.m_time, reverse=False)
+                            bin_no = int((entry_mtime - start_time)/bucket_margin)
 
-        # check each entry file
-        for entry in entries:
-            info("checking %s -- %d" % (entry.path, entry.m_time))
+                            entry = Entry(entry_file, entry_mtime, bin_no)
 
-            temp_command = base_command.replace('@@', entry.path)
-            proc = subprocess.Popen(temp_command.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-            proc.communicate()
+                            entries.append(entry)
 
-            with open(config['showmap_output']) as showmap_output_file:
-                lines = showmap_output_file.readlines()
-                for line in lines:
-                    try:
-                        edge_id = int(line.split(':')[0])
-                        edge_count = int(line.split(':')[1])
-                        covered_edges.add(edge_id)
-                    except IndexError:
-                        warn("cannot handle showmap output line: %s" % line, 1)
+                            break
 
-            # update the edge_no dict
-            if entry.bin_no not in edge_no_dict:
-                edge_no_dict[entry.bin_no] = len(covered_edges)
-            else:
-                edge_no_dict[entry.bin_no] = len(covered_edges)
+            # sort the entry file list according to creation time
+            entries.sort(key=lambda x: x.m_time, reverse=False)
 
-        ok("Total number of covered edges: %d" % len(covered_edges))
+            # check each entry file
+            for entry in entries:
+                # info("checking %s -- %d" % (entry.path, entry.m_time), 1)
+
+                temp_command = base_command.replace('@@', entry.path)
+                proc = subprocess.Popen(temp_command.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                proc.communicate()
+
+                with open(config['showmap_output']) as showmap_output_file:
+                    lines = showmap_output_file.readlines()
+                    for line in lines:
+                        try:
+                            edge_id = int(line.split(':')[0])
+                            edge_count = int(line.split(':')[1])
+                            covered_edges.add(edge_id)
+                        except IndexError:
+                            warn("cannot handle showmap output line: %s" % line, 1)
+
+                # update the edge_no dict
+                if entry.bin_no not in edge_no_dict:
+                    edge_no_dict[entry.bin_no] = len(covered_edges)
+                else:
+                    edge_no_dict[entry.bin_no] = len(covered_edges)
+
+            entry_group_dict[group_name] = edge_no_dict
+            ok("%s - Total number of covered edges: %d" % (group_name, len(covered_edges)))
 
         # then we need to process the data and draw the plot
-        if 0 not in edge_no_dict:
-            danger('Wrongly processed edge no dict!')
-            sys.exit(1)
-
-        known_bins = list(edge_no_dict.keys())
-        known_bins.sort()
-        max_bin = max(known_bins)
-
-        x_vals = []
-        y_vals = []
-
-        for bin_no in range(0, max_bin+1):
-            temp_bin_no = bin_no
-            while temp_bin_no not in known_bins:
-                temp_bin_no -= 1
-            x_vals.append(bin_no + 1)
-            y_vals.append(edge_no_dict[temp_bin_no])
-
-        edge_no_time_plot_filename = config['output_dir'] + '/' + "edge_no_over_time"
-
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.plot(x_vals, y_vals)
+
+        for group_name in entry_group_dict:
+            edge_no_dict = entry_group_dict[group_name]
+
+            if 0 not in edge_no_dict:
+                danger('Wrongly processed edge no dict!')
+                sys.exit(1)
+
+            known_bins = list(edge_no_dict.keys())
+            known_bins.sort()
+            max_bin = max(known_bins)
+
+            x_vals = []
+            y_vals = []
+
+            for bin_no in range(0, max_bin+1):
+                temp_bin_no = bin_no
+                while temp_bin_no not in known_bins:
+                    temp_bin_no -= 1
+                x_vals.append(bin_no + 1)
+                y_vals.append(edge_no_dict[temp_bin_no])
+
+            ax.plot(x_vals, y_vals)
+
+        edge_no_time_plot_filename = config['output_dir'] + '/' + "edge_no_over_time"
         ax.set(xlabel='time (%s)' % bucket, ylabel='edge no #',
                title='No of edges covered over time')
         ax.grid()

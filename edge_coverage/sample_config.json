@@ -1,12 +1,12 @@
 {
   "showmap_command": "/usr/local/bin/afl-showmap -o ## -- /home/lol/test_cfast @@",
-  "entry_dirs": [
+  "entry_dirs_afl": [
     "/home/lol/out_test/queue"
   ],
   "project_id": "test_cfast",
   "showmap_output": "temp/tmp_map",
   "output_dir": "temp/test_cfast",
-  "entry_name_pattern": "id.+",
+  "entry_name_pattern": ["id.+"],
   "start_time": 1521443670,
   "bucket": "min"
 }
