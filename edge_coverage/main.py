@@ -4,7 +4,6 @@ import re
 import shutil
 import subprocess
 import sys
-import matplotlib.pyplot as plt
 
 # TODO: deal with the dirty hack of importing
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -13,6 +12,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from common_utils import *
 from args import *
 from entry import *
+from edge_time_plotter import *
+from entry_time_plotter import *
 
 
 def sanitize_config(config):
@@ -90,6 +91,8 @@ def main():
             bucket_margin = 1
 
         # key: entry group name, value: edge_no_dict
+        edge_group_dict = {}
+        # key: entry group name, value: entry_no_dict
         entry_group_dict = {}
 
         targets = config['targets']
@@ -108,8 +111,10 @@ def main():
 
             entries = []
 
-            # key: bin_no, value: count
+            # key: bin_no, value: edge count
             edge_no_dict = {}
+            # key: bin_no, value: entry count
+            entry_no_dict = {}
 
             # collect entry files first
             for entry_dir in entry_dirs:
@@ -134,6 +139,8 @@ def main():
             # sort the entry file list according to creation time
             entries.sort(key=lambda x: x.m_time, reverse=False)
 
+            checked_entries = []
+
             # check each entry file
             for entry in entries:
                 # info("checking %s -- %d" % (entry.path, entry.m_time), 1)
@@ -154,54 +161,21 @@ def main():
 
                 # update the edge_no dict
                 # NOTE: temporarily no difference
+                checked_entries.append(entry)
+                entry_no_dict[entry.bin_no] = len(checked_entries)
+
                 if entry.bin_no not in edge_no_dict:
                     edge_no_dict[entry.bin_no] = len(covered_edges)
                 else:
                     edge_no_dict[entry.bin_no] = len(covered_edges)
 
-            entry_group_dict[group_name] = edge_no_dict
+            edge_group_dict[group_name] = edge_no_dict
+            entry_group_dict[group_name] = entry_no_dict
             ok("%s - Total number of covered edges: %d" % (group_name, len(covered_edges)))
+            ok("%s - Total number of entries: %d" % (group_name, len(checked_entries)))
 
-        # then we need to process the data and draw the plot
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-        # sort the group names, make sure every time the order is consistent
-        group_names = list(entry_group_dict.keys())
-        group_names.sort()
-
-        for group_name in group_names:
-            temp_edge_no_dict = entry_group_dict[group_name]
-
-            if 0 not in temp_edge_no_dict:
-                danger('Wrongly processed dict for %s!' % group_name)
-                sys.exit(1)
-
-            known_bins = list(temp_edge_no_dict.keys())
-            known_bins.sort()
-            max_bin = max(known_bins)
-
-            x_vals = []
-            y_vals = []
-
-            for bin_no in range(0, max_bin+1):
-                temp_bin_no = bin_no
-                while temp_bin_no not in known_bins:
-                    temp_bin_no -= 1
-                calibrated_bin_no = bin_no + 1
-                x_vals.append(calibrated_bin_no)
-                y_vals.append(temp_edge_no_dict[temp_bin_no])
-
-            ax.plot(x_vals, y_vals, label=group_name)
-
-        edge_no_time_plot_filename = config['output_dir'] + '/' + "edge_no_over_time"
-        ax.set(xlabel='time (%s)' % bucket, ylabel='edge no #',
-               title='No of edges covered over time')
-        ax.grid()
-        ax.legend()
-
-        fig.savefig(edge_no_time_plot_filename)
-        # plt.show()
+        plot_edge_over_time(config, edge_group_dict, bucket, 1)
+        plot_entry_over_time(config, entry_group_dict, bucket, 2)
 
 
 if __name__ == "__main__":
