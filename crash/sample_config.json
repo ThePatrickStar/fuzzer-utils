@@ -1,0 +1,10 @@
+{
+  "entry_dirs_afl": [
+    "/home/lol/test-lol-afl/out_test/crashes"
+  ],
+  "project_id": "fast",
+  "output_dir": "temp/fast_crash",
+  "entry_name_pattern": ["id.+", "w.+"],
+  "start_time": 1521443670,
+  "bucket": "min"
+}
