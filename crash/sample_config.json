@@ -1,10 +1,20 @@
 {
-  "entry_dirs_afl": [
-    "/home/lol/test-lol-afl/out_test/crashes"
-  ],
+  "targets": {
+    "afl-fidgety": {
+      "entry_dirs": [
+        "/home/lol/test-lol-afl/out_test/crashes"
+      ],
+      "start_time": 1521443670
+    },
+    "afl-fast": {
+      "entry_dirs": [
+        "/home/lol/test-lol-afl/out_test_fast/crashes"
+      ],
+      "start_time": 1521534575
+    }
+  },
   "project_id": "fast",
   "output_dir": "temp/fast_crash",
   "entry_name_pattern": ["id.+", "w.+"],
-  "start_time": 1521443670,
   "bucket": "min"
 }

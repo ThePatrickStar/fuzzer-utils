@@ -9,9 +9,8 @@ usage:
 Explanation of the config file (we use regex here):
 
 ```
-entry_dirs_.+ : the entry directories (queues of fuzzers).
-(The script will automatically group the results of one of these params as one plot.
-For example, we can have entry_dirs_afl and entry_dirs_fot, and we will end up with 2 plots per fig.)
+targets: essentially the output of each fuzzer
+(requires 2 fields: entry_dirs, start_time) 
 
 output_dir: the directory to put the plotted figures (outputs)
 

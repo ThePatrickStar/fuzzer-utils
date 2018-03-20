@@ -16,7 +16,7 @@ from entry import *
 
 
 def sanitize_config(config):
-    required_params = ['output_dir', 'entry_name_pattern', 'start_time', 'bucket']
+    required_params = ['output_dir', 'targets', 'entry_name_pattern', 'bucket']
 
     valid_buckets = ['second', 'minute', 'hour', 'sec', 'min', 'hour', 's', 'm', 'h']
 
@@ -25,16 +25,8 @@ def sanitize_config(config):
             danger("%s is missing in the config file" % param)
             return False
 
-    entry_dir_pattern = 'entry_dirs_.+'
-
-    entry_groups = []
-
-    for param in config:
-        if re.fullmatch(entry_dir_pattern, param) is not None:
-            entry_groups.append(param)
-
-    if len(entry_groups) == 0:
-        danger("No entry directory specified")
+    if len(config['targets']) == 0:
+        danger("No target specified")
         return False
 
     if config['bucket'].lower() not in valid_buckets:
@@ -46,7 +38,20 @@ def sanitize_config(config):
     if not config['output_dir'].endswith('/'):
         config['output_dir'] += '/'
 
-    config['entry_groups'] = entry_groups
+    return True
+
+
+def sanitize_target(target):
+    required_params = ['entry_dirs', 'start_time']
+
+    for param in required_params:
+        if param not in target:
+            danger("%s is missing in target")
+            return False
+
+    if len(target['entry_dirs']) == 0:
+        danger('No entry dir specified for target')
+        return False
 
     return True
 
@@ -74,8 +79,6 @@ def main():
 
         os.makedirs(config['output_dir'])
 
-        start_time = int(config['start_time'])
-
         # default bucket margin is one hour
         bucket_margin = 3600
         bucket = config['bucket']
@@ -87,11 +90,17 @@ def main():
         # key: entry group name, value: edge_no_dict
         entry_group_dict = {}
 
-        entry_groups = config['entry_groups']
+        targets = config['targets']
 
-        for entry_group in entry_groups:
-            group_name = entry_group.replace('entry_dirs_', '')
-            entry_dirs = config[entry_group]
+        for target_key in targets:
+            info("checking for %s" % target_key)
+            target = targets[target_key]
+            if not sanitize_target(target):
+                danger("skipping")
+                continue
+            start_time = int(target['start_time'])
+            group_name = target_key
+            entry_dirs = target['entry_dirs']
 
             entries = []
 
@@ -126,7 +135,7 @@ def main():
             # check each entry file
             for entry in entries:
                 checked_entries.append(entry)
-                # update the edge_no dict
+                # update the crash_no dict
                 crash_no_dict[entry.bin_no] = len(checked_entries)
 
             entry_group_dict[group_name] = crash_no_dict
@@ -136,14 +145,18 @@ def main():
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        for group_name in entry_group_dict:
-            edge_no_dict = entry_group_dict[group_name]
+        # sort the group names, make sure every time the order is consistent
+        group_names = list(entry_group_dict.keys())
+        group_names.sort()
 
-            if 0 not in edge_no_dict:
-                danger('Wrongly processed edge no dict!')
+        for group_name in group_names:
+            temp_crash_no_dict = entry_group_dict[group_name]
+
+            if 0 not in temp_crash_no_dict:
+                danger('Wrongly processed dict for %s!' % group_name)
                 sys.exit(1)
 
-            known_bins = list(edge_no_dict.keys())
+            known_bins = list(temp_crash_no_dict.keys())
             known_bins.sort()
             max_bin = max(known_bins)
 
@@ -154,15 +167,17 @@ def main():
                 temp_bin_no = bin_no
                 while temp_bin_no not in known_bins:
                     temp_bin_no -= 1
-                x_vals.append(bin_no + 1)
-                y_vals.append(edge_no_dict[temp_bin_no])
+                calibrated_bin_no = bin_no + 1
+                x_vals.append(calibrated_bin_no)
+                y_vals.append(temp_crash_no_dict[temp_bin_no])
 
-            ax.plot(x_vals, y_vals)
+            ax.plot(x_vals, y_vals, label=group_name)
 
         edge_no_time_plot_filename = config['output_dir'] + '/' + "crash_no_over_time"
         ax.set(xlabel='time (%s)' % bucket, ylabel='crash no #',
                title='No of unique crashes found over time')
         ax.grid()
+        ax.legend()
 
         fig.savefig(edge_no_time_plot_filename)
         # plt.show()
