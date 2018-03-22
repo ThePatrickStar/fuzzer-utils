@@ -174,8 +174,8 @@ def main():
             ok("%s - Total number of covered edges: %d" % (group_name, len(covered_edges)))
             ok("%s - Total number of entries: %d" % (group_name, len(checked_entries)))
 
-        plot_edge_over_time(config, edge_group_dict, bucket, 1)
-        plot_entry_over_time(config, entry_group_dict, bucket, 2)
+        plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, 1)
+        plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, 2)
 
 
 if __name__ == "__main__":

@@ -24,4 +24,6 @@ entry_name_pattern: the (regular expression) patterns for fuzzers' entry names
 
 bucket: the time unit used to plot the "edge no over time".
 (valid buckets are: "s", "m", "h", "sec", "min", "second", "minute", "hour", case does not matter)
+
+max_span: maximum span for the fuzzing campaign (unit is hour)
 ```

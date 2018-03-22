@@ -16,5 +16,6 @@
   "project_id": "fast",
   "output_dir": "temp/fast_crash",
   "entry_name_pattern": ["id.+", "w.+"],
-  "bucket": "min"
+  "bucket": "min",
+  "max_span": 24
 }

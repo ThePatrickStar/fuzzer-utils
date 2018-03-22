@@ -8,7 +8,7 @@ from common_utils import *
 from args import *
 
 
-def plot_edge_over_time(config, edge_group_dict, bucket, fig_no):
+def plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, fig_no):
     # then we need to process the data and draw the plot
     fig = plt.figure(fig_no)
     ax = fig.add_subplot(111)
@@ -26,7 +26,8 @@ def plot_edge_over_time(config, edge_group_dict, bucket, fig_no):
 
         known_bins = list(temp_edge_no_dict.keys())
         known_bins.sort()
-        max_bin = max(known_bins)
+        # max_bin = max(known_bins)
+        max_bin = int(config['max_span']) * bucket_margin
 
         x_vals = []
         y_vals = []
@@ -40,6 +41,12 @@ def plot_edge_over_time(config, edge_group_dict, bucket, fig_no):
             y_vals.append(temp_edge_no_dict[temp_bin_no])
 
         ax.plot(x_vals, y_vals, label=group_name)
+
+        info("saving edge-time info for %s" % group_name)
+        data_file_name = config['output_dir'] + '/' + group_name + '_edge_time.txt'
+        with open(data_file_name, 'w') as fp:
+            for (i, x) in enumerate(x_vals):
+                fp.write('%d,%d\n' % (x, y_vals[i]))
 
     edge_no_time_plot_filename = config['output_dir'] + '/' + "edge_no_over_time"
     ax.set(xlabel='time (%s)' % bucket, ylabel='edge no #',

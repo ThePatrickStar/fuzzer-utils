@@ -158,7 +158,9 @@ def main():
 
             known_bins = list(temp_crash_no_dict.keys())
             known_bins.sort()
-            max_bin = max(known_bins)
+
+            # max_bin = max(known_bins)
+            max_bin = int(config['max_span']) * bucket_margin
 
             x_vals = []
             y_vals = []
@@ -172,6 +174,12 @@ def main():
                 y_vals.append(temp_crash_no_dict[temp_bin_no])
 
             ax.plot(x_vals, y_vals, label=group_name)
+
+            info("saving crash-time info for %s" % group_name)
+            data_file_name = config['output_dir'] + '/' + group_name + '_crash_time.txt'
+            with open(data_file_name, 'w') as fp:
+                for (i, x) in enumerate(x_vals):
+                    fp.write('%d,%d\n' % (x, y_vals[i]))
 
         edge_no_time_plot_filename = config['output_dir'] + '/' + "crash_no_over_time"
         ax.set(xlabel='time (%s)' % bucket, ylabel='crash no #',

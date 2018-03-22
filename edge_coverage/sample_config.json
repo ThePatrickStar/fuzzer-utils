@@ -18,5 +18,6 @@
   "showmap_output": "temp/tmp_map",
   "output_dir": "temp/test_cfast",
   "entry_name_pattern": ["id.+"],
-  "bucket": "min"
+  "bucket": "min",
+  "max_span": 24
 }
