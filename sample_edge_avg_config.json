@@ -1,0 +1,21 @@
+{
+  "targets": {
+    "fot-moo": {
+      "data_files": [
+        "temp/mjs/fot-moo-new_edge_time.txt",
+        "temp/mjs/fot-moo-new-1_edge_time.txt",
+        "temp/mjs/fot-moo-new-2_edge_time.txt",
+        "temp/mjs/fot-moo-2_edge_time.txt",
+        "temp/mjs/fot-moo-1_edge_time.txt"
+      ]
+    },
+    "aflfast": {
+      "data_files": [
+        "temp/mjs/afl-fast-d-1_edge_time.txt",
+        "temp/mjs/afl-fast-d-2_edge_time.txt"
+      ]
+    }
+  },
+  "bucket": "min",
+  "plot_file": "temp/mjs_edge_cov"
+}
