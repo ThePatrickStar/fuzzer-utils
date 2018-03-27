@@ -1,0 +1,21 @@
+{
+  "targets": {
+    "fot-moo": {
+      "data_files": [
+        "temp/mjs_crash/fot-moo-new_crash_time.txt",
+        "temp/mjs_crash/fot-moo-new-1_crash_time.txt",
+        "temp/mjs_crash/fot-moo-new-2_crash_time.txt",
+        "temp/mjs_crash/fot-moo-2_crash_time.txt",
+        "temp/mjs_crash/fot-moo-1_crash_time.txt"
+      ]
+    },
+    "aflfast": {
+      "data_files": [
+        "temp/mjs_crash/afl-fast-d-1_crash_time.txt",
+        "temp/mjs_crash/afl-fast-d-2_crash_time.txt"
+      ]
+    }
+  },
+  "bucket": "min",
+  "plot_file": "temp/mjs_crash"
+}

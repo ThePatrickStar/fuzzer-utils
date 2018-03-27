@@ -12,7 +12,17 @@
     "aflfast": {
       "data_files": [
         "temp/mjs/afl-fast-d-1_edge_time.txt",
-        "temp/mjs/afl-fast-d-2_edge_time.txt"
+        "temp/mjs/afl-fast-d-2_edge_time.txt",
+        "temp/wxh/mjs_edge/afl-fast-1_edge_time.txt",
+        "temp/wxh/mjs_edge/afl-fast-2_edge_time.txt",
+        "temp/wxh/mjs_edge/afl-fast-3_edge_time.txt"
+      ]
+    },
+    "afl": {
+      "data_files": [
+        "temp/wxh/mjs_edge/afl-1_edge_time.txt",
+        "temp/wxh/mjs_edge/afl-2_edge_time.txt",
+        "temp/wxh/mjs_edge/afl-3_edge_time.txt"
       ]
     }
   },
