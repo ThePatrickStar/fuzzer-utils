@@ -169,6 +169,10 @@ def main():
                 else:
                     edge_no_dict[entry.bin_no] = len(covered_edges)
 
+            if 0  not in edge_no_dict:
+                edge_no_dict[0]= 0
+            if 0  not in entry_no_dict:
+                entry_no_dict[0]= 0
             edge_group_dict[group_name] = edge_no_dict
             entry_group_dict[group_name] = entry_no_dict
             ok("%s - Total number of covered edges: %d" % (group_name, len(covered_edges)))

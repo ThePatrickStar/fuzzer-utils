@@ -137,8 +137,10 @@ def main():
                 checked_entries.append(entry)
                 # update the crash_no dict
                 crash_no_dict[entry.bin_no] = len(checked_entries)
-
+            if 0 not in crash_no_dict:
+                crash_no_dict[0]=0
             entry_group_dict[group_name] = crash_no_dict
+
             ok("%s - Total number of unique crashes: %d" % (group_name, len(checked_entries)))
 
         # then we need to process the data and draw the plot
