@@ -43,7 +43,7 @@ def sanitize_config(config):
 
 
 def sanitize_target(target):
-    required_params = ['entry_dirs', 'start_time']
+    required_params = ['entry_dirs']
 
     for param in required_params:
         if param not in target:
@@ -53,6 +53,23 @@ def sanitize_target(target):
     if len(target['entry_dirs']) == 0:
         danger('No entry dir specified for target')
         return False
+
+    else:
+        stats_file = os.path.dirname(os.path.abspath(target['entry_dirs'][0])) + '/' + 'fuzzer_stats'
+        if not os.path.isfile(stats_file) and 'start_time' not in target:
+            danger('Neither start_time or fuzzer_stats found')
+            return False
+        elif os.path.isfile(stats_file):
+            if 'start_time' in target: # coexistence allowed but warn user
+                danger('Warning: both "start_time" and fuzzer_stats file exist! "fuzzer_stats" will be used.')
+            with open (stats_file, 'r') as statsfile:
+                for line in statsfile.readlines():
+                    if re.search('start_time', line):
+                        target['start_time'] = int(line.split()[2])
+                        break
+            if 'start_time' not in target:
+                danger('Bad format: no "start_time" found in fuzzer_stats')
+                return False
 
     return True
 
