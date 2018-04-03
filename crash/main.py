@@ -59,8 +59,9 @@ def sanitize_target(target):
             danger('Neither start_time or fuzzer_stats found')
             return False
         elif os.path.isfile(stats_file):
-            if 'start_time' in target: # coexistence allowed but warn user
-                danger('Warning: both "start_time" and fuzzer_stats file exist! "fuzzer_stats" will be used.')
+            # coexistence allowed but warn user
+            if 'start_time' in target:
+                warn('Warning: both "start_time" and fuzzer_stats file exist! "fuzzer_stats" will be used.')
             with open (stats_file, 'r') as statsfile:
                 for line in statsfile.readlines():
                     if re.search('start_time', line):
