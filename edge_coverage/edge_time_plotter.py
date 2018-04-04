@@ -31,7 +31,9 @@ def plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, fig_no):
 
         x_vals = []
         y_vals = []
-
+        
+        # log("known bins are %s" % str(known_bins))
+        # log("max_bin is %d" % max_bin)
         for bin_no in range(0, max_bin + 1):
             temp_bin_no = bin_no
             while temp_bin_no not in known_bins:

@@ -208,6 +208,12 @@ def main():
             ok("%s - Total number of covered edges: %d" % (group_name, len(covered_edges)))
             ok("%s - Total number of entries: %d" % (group_name, len(checked_entries)))
 
+
+        if bucket_margin == 3600:
+            bucket_margin = 1
+        elif bucket_margin == 1:
+            bucket_margin = 3600
+
         plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, 1)
         plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, 2)
 

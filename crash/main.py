@@ -181,6 +181,11 @@ def main():
         group_names = list(entry_group_dict.keys())
         group_names.sort()
 
+        if bucket_margin == 3600:
+            bucket_margin = 1
+        elif bucket_margin == 1:
+            bucket_margin = 3600
+
         for group_name in group_names:
             temp_crash_no_dict = entry_group_dict[group_name]
 
@@ -192,6 +197,7 @@ def main():
             known_bins.sort()
 
             # max_bin = max(known_bins)
+
             max_bin = int(config['max_span']) * bucket_margin
 
             x_vals = []
