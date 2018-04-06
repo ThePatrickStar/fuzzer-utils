@@ -14,7 +14,7 @@ from args import *
 from entry import *
 from edge_time_plotter import *
 from entry_time_plotter import *
-
+from worker import *
 
 def sanitize_config(config):
     required_params = ['showmap_command', 'targets', 'showmap_output', 'output_dir', 'entry_name_pattern', 'bucket']
@@ -90,6 +90,7 @@ def sanitize_target(target):
     return True
 
 
+@timed
 def main():
     arg_parser = ArgParser(description='Analyze edge coverage.')
     required_args = arg_parser.add_argument_group('required arguments')
@@ -113,8 +114,6 @@ def main():
 
         os.makedirs(config['output_dir'])
 
-        base_command = config['showmap_command'].replace('##', config['showmap_output'])
-
         # default bucket margin is one hour
         bucket_margin = 3600
         bucket = config['bucket']
@@ -130,86 +129,26 @@ def main():
 
         targets = config['targets']
 
-        for target_key in targets:
-            info("checking for %s" % target_key)
+        workers = []
+
+        # temporarily create a worker for every target
+        for (i, target_key) in enumerate(targets.keys()):
+            # info("checking for %s" % target_key)
             target = targets[target_key]
-            if not sanitize_target(target):
-                danger("skipping")
-                continue
-            start_time = int(target['start_time'])
-            group_name = target_key
-            entry_dirs = target['entry_dirs']
+            target['name'] = target_key
+            worker = Worker(i, [target], config, bucket_margin)
+            workers.append(worker)
 
-            covered_edges = set()
-
-            entries = []
-
-            # key: bin_no, value: edge count
-            edge_no_dict = {}
-            # key: bin_no, value: entry count
-            entry_no_dict = {}
-
-            # collect entry files first
-            for entry_dir in entry_dirs:
-                entry_files = os.listdir(entry_dir)
-
-                for entry_file in entry_files:
-                    # we only check the fuzzer output file
-                    for pattern in config['entry_name_pattern']:
-                        if re.fullmatch(pattern, entry_file) is not None:
-                            entry_file = entry_dir + '/' + entry_file
-
-                            entry_mtime = int(os.stat(entry_file).st_mtime)
-
-                            bin_no = int((entry_mtime - start_time)/bucket_margin)
-
-                            entry = Entry(entry_file, entry_mtime, bin_no)
-
-                            entries.append(entry)
-
-                            break
-
-            # sort the entry file list according to creation time
-            entries.sort(key=lambda x: x.m_time, reverse=False)
-
-            checked_entries = []
-
-            # check each entry file
-            for entry in entries:
-                # info("checking %s -- %d" % (entry.path, entry.m_time), 1)
-
-                temp_command = base_command.replace('@@', entry.path)
-                proc = subprocess.Popen(temp_command.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-                proc.communicate()
-
-                with open(config['showmap_output']) as showmap_output_file:
-                    lines = showmap_output_file.readlines()
-                    for line in lines:
-                        try:
-                            edge_id = int(line.split(':')[0])
-                            edge_count = int(line.split(':')[1])
-                            covered_edges.add(edge_id)
-                        except IndexError:
-                            warn("cannot handle showmap output line: %s" % line, 1)
-
-                # update the edge_no dict
-                # NOTE: temporarily no difference
-                checked_entries.append(entry)
-                entry_no_dict[entry.bin_no] = len(checked_entries)
-
-                if entry.bin_no not in edge_no_dict:
-                    edge_no_dict[entry.bin_no] = len(covered_edges)
-                else:
-                    edge_no_dict[entry.bin_no] = len(covered_edges)
-
-            if 0 not in edge_no_dict:
-                edge_no_dict[0]= 0
-            if 0 not in entry_no_dict:
-                entry_no_dict[0]= 0
-            edge_group_dict[group_name] = edge_no_dict
-            entry_group_dict[group_name] = entry_no_dict
-            ok("%s - Total number of covered edges: %d" % (group_name, len(covered_edges)))
-            ok("%s - Total number of entries: %d" % (group_name, len(checked_entries)))
+        ok("starting %d workers" % len(workers))
+        for worker in workers:
+            worker.start()
+        for worker in workers:
+            worker.join()
+        for worker in workers:
+            for group in worker.edge_group_dict:
+                edge_group_dict[group] = worker.edge_group_dict[group]
+            for group in worker.entry_group_dict:
+                entry_group_dict[group] = worker.entry_group_dict[group]
 
         if bucket_margin == 3600:
             bucket_margin = 1
