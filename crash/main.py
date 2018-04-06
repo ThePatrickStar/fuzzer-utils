@@ -38,6 +38,9 @@ def sanitize_config(config):
     if not config['output_dir'].endswith('/'):
         config['output_dir'] += '/'
 
+    if 'plot_figure' not in config:
+        config['plot_figure'] = True
+
     return True
 
 
@@ -219,14 +222,15 @@ def main():
                 for (i, x) in enumerate(x_vals):
                     fp.write('%d,%d\n' % (x, y_vals[i]))
 
-        edge_no_time_plot_filename = config['output_dir'] + '/' + "crash_no_over_time"
-        ax.set(xlabel='time (%s)' % bucket, ylabel='crash no #',
-               title='No of unique crashes found over time')
-        ax.grid()
-        ax.legend()
+        if config['plot_figure']:
+            edge_no_time_plot_filename = config['output_dir'] + '/' + "crash_no_over_time"
+            ax.set(xlabel='time (%s)' % bucket, ylabel='crash no #',
+                   title='No of unique crashes found over time')
+            ax.grid()
+            ax.legend()
 
-        fig.savefig(edge_no_time_plot_filename)
-        # plt.show()
+            fig.savefig(edge_no_time_plot_filename)
+            # plt.show()
 
 
 if __name__ == "__main__":

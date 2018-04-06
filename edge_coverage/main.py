@@ -39,6 +39,9 @@ def sanitize_config(config):
     if not config['output_dir'].endswith('/'):
         config['output_dir'] += '/'
 
+    if 'plot_figure' not in config:
+        config['plot_figure'] = True
+
     return True
 
 
@@ -199,23 +202,23 @@ def main():
                 else:
                     edge_no_dict[entry.bin_no] = len(covered_edges)
 
-            if 0  not in edge_no_dict:
+            if 0 not in edge_no_dict:
                 edge_no_dict[0]= 0
-            if 0  not in entry_no_dict:
+            if 0 not in entry_no_dict:
                 entry_no_dict[0]= 0
             edge_group_dict[group_name] = edge_no_dict
             entry_group_dict[group_name] = entry_no_dict
             ok("%s - Total number of covered edges: %d" % (group_name, len(covered_edges)))
             ok("%s - Total number of entries: %d" % (group_name, len(checked_entries)))
 
-
         if bucket_margin == 3600:
             bucket_margin = 1
         elif bucket_margin == 1:
             bucket_margin = 3600
 
-        plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, 1)
-        plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, 2)
+        if config['plot_figure']:
+            plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, 1)
+            plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, 2)
 
 
 if __name__ == "__main__":
