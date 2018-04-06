@@ -66,7 +66,8 @@ class Worker (threading.Thread):
         self.edge_group_dict = {}
         self.entry_group_dict = {}
         self.config = config
-        self.base_command = config['showmap_command'].replace('##', config['showmap_output']+'_'+str(tid))
+        self.showmap_output = config['showmap_output']+'_'+str(tid)
+        self.base_command = config['showmap_command'].replace('##', self.showmap_output)
         self.bucket_margin = bucket_margin
 
     def run(self):
@@ -122,7 +123,7 @@ class Worker (threading.Thread):
                 proc = subprocess.Popen(temp_command.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
                 proc.communicate()
 
-                with open(self.config['showmap_output']) as showmap_output_file:
+                with open(self.showmap_output) as showmap_output_file:
                     lines = showmap_output_file.readlines()
                     for line in lines:
                         try:
