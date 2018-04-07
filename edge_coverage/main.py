@@ -91,6 +91,7 @@ def sanitize_target(target):
     return True
 
 
+@timed
 def main():
     arg_parser = ArgParser(description='Analyze edge coverage.')
     required_args = arg_parser.add_argument_group('required arguments')
