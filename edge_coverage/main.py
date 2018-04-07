@@ -15,6 +15,8 @@ from entry import *
 from edge_time_plotter import *
 from entry_time_plotter import *
 from worker import *
+from data_collector import *
+
 
 def sanitize_config(config):
     required_params = ['showmap_command', 'targets', 'showmap_output', 'output_dir', 'entry_name_pattern', 'bucket']
@@ -158,6 +160,9 @@ def main():
         if config['plot_figure']:
             plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, 1)
             plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, 2)
+
+        collect_entry_over_time(config, entry_group_dict, bucket_margin)
+        collect_edge_over_time(config, edge_group_dict, bucket_margin)
 
 
 if __name__ == "__main__":
