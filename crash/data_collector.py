@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import os, sys, json
 # TODO: deal with the dirty hack of importing
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -8,10 +7,7 @@ from common_utils import *
 from args import *
 
 
-def plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, fig_no):
-    # then we need to process the data and draw the plot
-    fig = plt.figure(fig_no)
-    ax = fig.add_subplot(111)
+def collect_crash_over_time(config, entry_group_dict, bucket_margin):
 
     # sort the group names, make sure every time the order is consistent
     group_names = list(entry_group_dict.keys())
@@ -40,16 +36,12 @@ def plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, fig_no
             x_vals.append(calibrated_bin_no)
             y_vals.append(temp_entry_no_dict[temp_bin_no])
 
-        ax.plot(x_vals, y_vals, label=group_name)
-
         data_dict = {}
         for (i, x) in enumerate(x_vals):
             data_dict[x] = y_vals[i]
 
-    edge_no_time_plot_filename = config['output_dir'] + '/' + "entry_no_over_time"
-    ax.set(xlabel='time (%s)' % bucket, ylabel='entry no #',
-           title='No of entries in queue over time')
-    ax.grid()
-    ax.legend()
-
-    fig.savefig(edge_no_time_plot_filename)
+        info("saving crash-time info for %s" % group_name)
+        data_file_name = config['output_dir'] + '/' + group_name + '_crash_time.txt'
+        with open(data_file_name, 'w') as fp:
+            for (i, x) in enumerate(x_vals):
+                fp.write('%d,%d\n' % (x, y_vals[i]))
