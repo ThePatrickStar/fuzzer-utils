@@ -90,6 +90,8 @@ def main():
                         if bin_no != i+1:
                             danger("invalid file - bin_no(%d), line_no(%d)" % (bin_no, i))
                             sys.exit(1)
+                        if bin_no == len(lines):
+                            ok("total: %d" % crash_no, 1)
                         if first_run:
                             accumulates.append(crash_no)
                         else:
@@ -97,6 +99,7 @@ def main():
                     first_run = False
 
             avgs = list(map(lambda acc: float(acc)/float(base_no), accumulates))
+            ok("total avg: %.2f" % avgs[-1], 1)
             target_crash_dict[target_key] = avgs
 
         # then we need to process the data and draw the plot
