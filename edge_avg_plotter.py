@@ -28,6 +28,9 @@ def sanitize_config(config):
         danger("No target specified")
         return False
 
+    if 'max_bin' not in config:
+        config['max_bin'] = -1
+
     return True
 
 
@@ -79,6 +82,7 @@ def main():
             base_no = len(data_files)
             accumulates = []
             first_run = True
+            max_bin = config['max_bin']
 
             for data_file in data_files:
                 with open(data_file) as data_fd:
@@ -88,8 +92,10 @@ def main():
                         bin_no = int(tokens[0])
                         edge_no = int(tokens[1])
                         if bin_no != i+1:
-                            danger("invalid file - bin_no(%d), line_no(%d)" % (bin_no, i))
+                            danger("invalid file - bin_no(%d), line_no(%d)" % (bin_no, i), 1)
                             sys.exit(1)
+                        if bin_no == len(lines):
+                            ok("total: %d" % edge_no, 1)
                         if first_run:
                             accumulates.append(edge_no)
                         else:
@@ -97,6 +103,7 @@ def main():
                     first_run = False
 
             avgs = list(map(lambda acc: float(acc)/float(base_no), accumulates))
+            ok("total avg: %.2f" % avgs[-1], 1)
             target_edge_dict[target_key] = avgs
 
         # then we need to process the data and draw the plot
