@@ -31,7 +31,7 @@ then
     fi
 fi
 
-if [[ ! -z $4 ]] && ([[ ! $4 =~ ^[0-9]+$ ]] || (( A <= 0)) )
+if [[ ! -z $4 ]] && [[ ! $4 =~ ^[0-9]+$ ]] 
 then
     echo "$4 is not a positive number. Aborting"
     usage;
