@@ -1,4 +1,4 @@
-# require python3
+#!/usr/bin/env python3
 import os
 import argparse
 import glob
@@ -8,9 +8,9 @@ import re
 def main():
     parser = argparse.ArgumentParser(description='avg_exec_speed: Calculate *average executions per second* for all tests in specified path (recusively)')
     parser.add_argument('path', metavar='path', type=str, nargs='+', help='the path containing *fuzzer_stats* files')
+    parser.add_argument('--no-path',action='store_true', help='show value only, supress path')
 
     args = parser.parse_args()
-
     for path in args.path:
         if os.path.isdir(path):
             for stats_file in sorted(glob.glob(path+'/**/fuzzer_stats', recursive=True)):
@@ -29,7 +29,10 @@ def main():
                             hit_count += 1
                             if hit_count == 3:
                                 break
-                print(os.path.abspath(stats_file), ': ', '{:.2f}'.format(execs_done / (last_update-start_time)))
+                if args.no_path:
+                    print(round(execs_done / (last_update-start_time)))
+                else:
+                    print(os.path.abspath(stats_file), ': ', round(execs_done / (last_update-start_time)))
         else:
             print("warning: %s is not a path and is skipped" % path)
 
