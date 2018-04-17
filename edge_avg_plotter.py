@@ -124,10 +124,10 @@ def main():
             y_vals = []
 
             for bin_no in range(0, max_bin):
-                x_vals.append(bin_no+1)
+                x_vals.append(bin_no)
                 y_vals.append(avgs[bin_no])
 
-            ax.plot(x_vals, y_vals, label=group_name)
+            ax.plot(x_vals[1:], y_vals[1:], label=group_name)
 
         bucket = config['bucket']
         edge_no_time_plot_filename = config['plot_file']
