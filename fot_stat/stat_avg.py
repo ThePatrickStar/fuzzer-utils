@@ -45,7 +45,7 @@ def sanitize_target(target):
 
 def main():
     arg_parser = argparse.ArgumentParser(description='Analyze average edge coverage.')
-    arg_parser.add_argument('-c', help='Path to the configuration json file.', required=True)
+    arg_parser.add_argument('-c', metavar='config_file', help='Path to the configuration json file.', required=True)
 
     args = arg_parser.parse_args()
 

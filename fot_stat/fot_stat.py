@@ -1,7 +1,6 @@
 import json
 import os
 import re
-import collections
 import sys
 import argparse
 from functools import reduce
