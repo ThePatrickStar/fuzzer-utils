@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import collections
 import sys
 import argparse
 from functools import reduce
@@ -10,9 +11,6 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from common_utils import *
 
-
-def avg_stats():
-    pass
 
 
 def stats():
@@ -67,7 +65,7 @@ def stats():
                         # line = json.loads(line)
                         # handle json here
                         single_testcase = json.loads(line)
-                        rank = single_testcase["rank"] # rank: integer, used as index of list
+                        rank = int(single_testcase["rank"])
                         block_set = set(single_testcase["exec"]["deputy_trace"]["inner"])
                         func_set = set(single_testcase["exec"]["func_stats"]["covered_funcs"])
                         time_us = single_testcase["exec"]["us"]
