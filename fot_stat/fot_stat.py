@@ -42,63 +42,91 @@ def stats():
             warn("%s not exist, ingore." % path)
         else:
             with open(filename, 'r') as f:
-                # block_cov_dict / func_cov_dict
+                # edge_cov_dict / func_cov_dict
                 # { '5' : {rank1:(), rank2:(), ... },
                 #   '10': {rank1:(), rank2:(), ... },
                 #   '20': {rank1:(), rank2:(), ... }}
-                # time_dict
+                # time_dict / total_bonus_dict / total_score_dict
                 # { '5' : {rank1:[], rank2:[], ... },
                 #   '10': {rank1:[], rank2:[], ... },
                 #   '20': {rank1:[], rank2:[], ... }}
-                block_cov_dict = {}
+                # rank_nums_dict
+                # { '5' : {rank1:0.42, rank2:0.32, ... },
+                #   '10': {rank1:0.42, rank2:0.32, ... },
+                #   '20': {rank1:0.42, rank2:0.32, ... }}
+                edge_cov_dict = {}
                 func_cov_dict = {}
                 time_dict = {}
+                rank_nums_dict = {}
+                total_bonus_dict = {}
+                total_score_dict = {}
                 cycle_seq = 0
                 for line in f.readlines():
                     if re.search("^cycle", line):
                         cycle_seq = line.split('-')[1].rstrip()
-                        block_cov_dict[cycle_seq] = dict()
+                        edge_cov_dict[cycle_seq] = dict()
                         func_cov_dict[cycle_seq] = dict()
                         time_dict[cycle_seq] = dict()
+                        total_bonus_dict[cycle_seq] = dict()
+                        total_score_dict[cycle_seq] = dict()
                     else:
                         # line = json.loads(line)
                         # handle json here
                         single_testcase = json.loads(line)
                         rank = int(single_testcase["rank"])
-                        block_set = set(single_testcase["exec"]["deputy_trace"]["inner"])
+                        edge_set = set(single_testcase["exec"]["deputy_trace"]["inner"])
                         func_set = set(single_testcase["exec"]["func_stats"]["covered_funcs"])
                         time_us = single_testcase["exec"]["us"]
+                        total_bonus = single_testcase["exec"]["func_stats"]["total_bonus"]
+                        total_score = single_testcase["exec"]["func_stats"]["total_score"]
 
-                        if rank in block_cov_dict[cycle_seq] :
-                             block_cov_dict[cycle_seq][rank]|=(block_set)
+                        if rank in edge_cov_dict[cycle_seq] :
+                             edge_cov_dict[cycle_seq][rank]|=(edge_set)
                              func_cov_dict[cycle_seq][rank]|=(func_set)
                              time_dict[cycle_seq][rank].append(time_us)
+                             total_bonus_dict[cycle_seq][rank].append(total_bonus)
+                             total_score_dict[cycle_seq][rank].append(total_score)
                         else:
-                            block_cov_dict[cycle_seq][rank] = block_set
+                            edge_cov_dict[cycle_seq][rank] = edge_set
                             func_cov_dict[cycle_seq][rank]=func_set
                             time_dict[cycle_seq][rank] = [time_us]
+                            total_bonus_dict[cycle_seq][rank] = [total_bonus]
+                            total_score_dict[cycle_seq][rank] = [total_score]
 
-                # { 'block': { 5 : {rank1: 0.41, rank2: 0.23, ...},
-                #              10: {rank1: 0.43, rank2: 0.30, ...},
-                #              20: {rank1: 0.48, rank2: 0.33, ...}},
+
+                # { 'edge': { 5 : {rank1: 0.41, rank2: 0.23, ..., average:},
+                #             10: {rank1: 0.43, rank2: 0.30, ..., average:},
+                #             20: {rank1: 0.48, rank2: 0.33, ..., average:}},
                 #
-                #   'func' : { 5 : {rank1: 0.41, rank2: 0.23, ...},
-                #              10: {rank1: 0.43, rank2: 0.30, ...},
-                #              20: {rank1: 0.48, rank2: 0.33, ...}},
+                #   'func': { 5 : {rank1: 0.41, rank2: 0.23, ..., average:},
+                #             10: {rank1: 0.43, rank2: 0.30, ..., average:},
+                #             20: {rank1: 0.48, rank2: 0.33, ..., average:}},
                 #
-                #   'time' : { 5 : {rank1: 1234, rank2: 1010, ...},
-                #              10: {rank1: 1235, rank2: 1010, ...},
-                #              20: {rank1: 1293, rank2: 1002, ...}}
+                #   'time': { 5 : {rank1: 1234, rank2: 1010, ..., average:},
+                #             10: {rank1: 1235, rank2: 1010, ..., average:},
+                #             20: {rank1: 1293, rank2: 1002, ..., average:}},
+                #
+                #   'rank_nums':   { 5 : {rank1: 1234, rank2: 1010, ..., count:},
+                #                    10: {rank1: 1235, rank2: 1010, ...},
+                #                    20: {rank1: 1293, rank2: 1002, ...}},
+                #
+                #   'total_bonus': { 5 : {rank1: 1234, rank2: 1010, ..., count:},
+                #                    10: {rank1: 1235, rank2: 1010, ...},
+                #                    20: {rank1: 1293, rank2: 1002, ...}},
+                #
+                #   'total_score': { 5 : {rank1: 1234, rank2: 1010, ..., count:},
+                #                    10: {rank1: 1235, rank2: 1010, ...},
+                #                    20: {rank1: 1293, rank2: 1002, ...}}
                 # }
-                result={"block": {}, "func":{}, "time":{}}
-                count_blocks = count_funcs = 0
-                for key in block_cov_dict: # iterate over cycle
+                result={"edge": {}, "func":{}, "time":{}, "rank_nums":{}, "total_bonus":{}, "total_score":{}}
+                count_edges = count_funcs = 0
+                for key in edge_cov_dict: # iterate over cycle
 
-                    all_blocks=set()
-                    for b_set in block_cov_dict[key].values():
-                        all_blocks |= b_set
-                    count_blocks = len(all_blocks)
-                    result["block"][key] = dict((rank,round(len(b_set)/count_blocks,4)) for rank, b_set in block_cov_dict[key].items())
+                    all_edges=set()
+                    for b_set in edge_cov_dict[key].values():
+                        all_edges |= b_set
+                    count_edges = len(all_edges)
+                    result["edge"][key] = dict((rank,round(len(b_set)/count_edges,4)) for rank, b_set in edge_cov_dict[key].items())
 
                     all_funcs=set()
                     for f_set in func_cov_dict[key].values():
@@ -107,6 +135,9 @@ def stats():
                     result["func"][key] = dict((rank, round(len(f_set)/count_funcs,4)) for rank, f_set in func_cov_dict[key].items())
 
                     result['time'][key] = dict((rank, round(reduce(lambda x, y:x+y, timelist_of_a_rank)/len(timelist_of_a_rank))) for rank, timelist_of_a_rank in time_dict[key].items())
+                    result['total_bonus'][key] = dict((rank, round(reduce(lambda x, y:x+y, bonus_list_of_a_rank)/len(bonus_list_of_a_rank))) for rank, bonus_list_of_a_rank in total_bonus_dict[key].items())
+                    result['total_score'][key] = dict((rank, round(reduce(lambda x, y:x+y, score_list_of_a_rank)/len(score_list_of_a_rank))) for rank, score_list_of_a_rank in total_score_dict[key].items())
+                    result['rank_nums'][key] = dict((rank, len(timelist_of_a_rank)) for rank, timelist_of_a_rank in time_dict[key].items())
 
                 # write to files
                 result_json_filename = args.o + '/' + os.path.splitext(os.path.basename(filename))[0] + '.json'

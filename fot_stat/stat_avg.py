@@ -80,15 +80,15 @@ def main():
                     input_data_list.append(json.load(data_fd))
                     count = len(input_data_list)
 
-            # switch [{block: {5:{},10:{},20:{}}, func:{5:{},10:{},20:{}}, time:{5:{},10:{},20:{}} }]
-            # to {block: { 5: [{}], 10: [{}], 20: [{}] }, func: ..., time: ... }
-            result_dict = { "block": {}, "func":{}, "time":{} }
-            for paramkey in input_data_list[0].keys(): # loop over 'block' 'func' 'time'
+            # switch [{edge: {5:{},10:{},20:{}}, func:{5:{},10:{},20:{}}, time:{5:{},10:{},20:{}} }]
+            # to {edge: { 5: [{}], 10: [{}], 20: [{}] }, func: ..., time: ... }
+            result_dict = { "edge": {}, "func":{}, "time":{}, "rank_nums":{}, "total_bonus":{}, "total_score":{}}
+            for paramkey in input_data_list[0].keys(): # loop over 'edge' 'func' 'time' 'rank_nums' 'total_bonus' 'total_score'
                 for cycle_num in input_data_list[0][paramkey].keys(): # loop over cycle5, 10, 20
                     result_dict[paramkey][cycle_num] = dict()
                     sum_list = [each_dict[paramkey][cycle_num] for each_dict in input_data_list]
-                    # CAN BE OPTIMIZED: here shared_ranks computed 9 times, but
-                    # the 3 different paramkey with the same cycle_num have
+                    # CAN BE OPTIMIZED: here shared_ranks computed 18 times, but
+                    # the 6 different paramkey with the same cycle_num have
                     # the same shared_ranks.
                     # here convert to integer for sorting by rank
                     # shared_ranks = sorted(set(sum_list[0].keys()).intersection(*[set(each_dict.keys()) for each_dict in sum_list]))
