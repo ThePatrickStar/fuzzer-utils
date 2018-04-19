@@ -82,7 +82,7 @@ def main():
 
             # switch [{edge: {5:{},10:{},20:{}}, func:{5:{},10:{},20:{}}, time:{5:{},10:{},20:{}} }]
             # to {edge: { 5: [{}], 10: [{}], 20: [{}] }, func: ..., time: ... }
-            result_dict = { "edge": {}, "func":{}, "time":{}, "rank_nums":{}, "total_bonus":{}, "total_score":{}}
+            result_dict = { "edge": {}, "func":{}, "time":{}, "rank_nums":{}, "total_bonus":{}, "total_score":{}, "file_len":{}, "edge_num":{}, "func_num":{}}
             for paramkey in input_data_list[0].keys(): # loop over 'edge' 'func' 'time' 'rank_nums' 'total_bonus' 'total_score'
                 for cycle_num in input_data_list[0][paramkey].keys(): # loop over cycle5, 10, 20
                     result_dict[paramkey][cycle_num] = dict()
@@ -90,9 +90,10 @@ def main():
                     # CAN BE OPTIMIZED: here shared_ranks computed 18 times, but
                     # the 6 different paramkey with the same cycle_num have
                     # the same shared_ranks.
-                    # here convert to integer for sorting by rank
-                    # shared_ranks = sorted(set(sum_list[0].keys()).intersection(*[set(each_dict.keys()) for each_dict in sum_list]))
-                    shared_ranks = sorted({int(each_rank) for each_rank in sum_list[0].keys()}.intersection(*[ {int(each_rank) for each_rank in each_dict} for each_dict in sum_list]))
+                    # here convert to integer for sorting by rank, ADD: since
+                    # "average" is added, coversion is not applicable anymore
+                    # shared_ranks = sorted({int(each_rank) for each_rank in sum_list[0].keys()}.intersection(*[ {int(each_rank) for each_rank in each_dict} for each_dict in sum_list]))
+                    shared_ranks = sorted({each_rank for each_rank in sum_list[0].keys()}.intersection(*[ {each_rank for each_rank in each_dict} for each_dict in sum_list]))
                     for each_shared_rank in shared_ranks:
                         sum_of_values = 0
                         for each_dict in sum_list:
