@@ -15,6 +15,21 @@
           "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out6.json"
       ],
       "output_file": "./fot-456.json"
+    },
+    "fot-all": {
+      "data_files": [
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out1.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out2.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out3.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out4.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out5.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out6.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out7.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out8.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out9.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out10.json"
+      ],
+      "output_file": "./fot-all.json"
     }
   }
 }

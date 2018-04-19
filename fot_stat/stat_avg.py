@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import collections
 import argparse
 from functools import reduce
 
@@ -8,6 +9,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from common_utils import *
+
+
+def stoi_helper(astr):
+    if astr == "average":
+        return -1
+    elif astr == "count":
+        return -2
+    else:
+        return int(astr)
 
 
 def sanitize_config(config):
@@ -69,10 +79,6 @@ def main():
 
             data_files = target['data_files']
             output_file = target['output_file']
-            base_no = len(data_files)
-            accumulates = []
-            first_run = True
-            max_bin = config['max_bin']
 
             input_data_list = []
             for data_file in data_files:
@@ -85,20 +91,23 @@ def main():
             result_dict = { "edge": {}, "func":{}, "time":{}, "rank_nums":{}, "total_bonus":{}, "total_score":{}, "file_len":{}, "edge_num":{}, "func_num":{}}
             for paramkey in input_data_list[0].keys(): # loop over 'edge' 'func' 'time' 'rank_nums' 'total_bonus' 'total_score'
                 for cycle_num in input_data_list[0][paramkey].keys(): # loop over cycle5, 10, 20
-                    result_dict[paramkey][cycle_num] = dict()
+                    result_dict[paramkey][cycle_num] = collections.OrderedDict()
                     sum_list = [each_dict[paramkey][cycle_num] for each_dict in input_data_list]
-                    # CAN BE OPTIMIZED: here shared_ranks computed 18 times, but
-                    # the 6 different paramkey with the same cycle_num have
-                    # the same shared_ranks.
-                    # here convert to integer for sorting by rank, ADD: since
-                    # "average" is added, coversion is not applicable anymore
-                    # shared_ranks = sorted({int(each_rank) for each_rank in sum_list[0].keys()}.intersection(*[ {int(each_rank) for each_rank in each_dict} for each_dict in sum_list]))
-                    shared_ranks = sorted({each_rank for each_rank in sum_list[0].keys()}.intersection(*[ {each_rank for each_rank in each_dict} for each_dict in sum_list]))
+                    # if cycle_num not in shared_ranks:
+                    #    shared_ranks[cycle_num] = sorted({stoi_helper(each_rank) for each_rank in sum_list[0].keys()}.intersection(*[ {stoi_helper(each_rank) for each_rank in each_dict} for each_dict in sum_list]))
+                    shared_ranks = sorted({stoi_helper(each_rank) for each_rank in sum_list[0].keys()}.intersection(*[ {stoi_helper(each_rank) for each_rank in each_dict} for each_dict in sum_list]))
+                    for index, rank in enumerate(shared_ranks):
+                        if rank == -1:
+                            shared_ranks[index] = "average"
+                            break;
+                        elif rank == -2:
+                            shared_ranks[index] = "count"
+                            break;
                     for each_shared_rank in shared_ranks:
                         sum_of_values = 0
                         for each_dict in sum_list:
                             sum_of_values += each_dict[str(each_shared_rank)]
-                            result_dict[paramkey][cycle_num][each_shared_rank] = round(sum_of_values / count, 4)
+                        result_dict[paramkey][cycle_num][each_shared_rank] = round(sum_of_values / count, 4)
 
             with open(output_file, 'w') as output_json:
                 json.dump(result_dict, output_json)
