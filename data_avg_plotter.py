@@ -59,6 +59,7 @@ def sanitize_target(target):
     return True
 
 
+@timed
 def main():
     arg_parser = ArgParser(description='Analyze average data of multiple files.')
     required_args = arg_parser.add_argument_group('required arguments')
@@ -81,17 +82,22 @@ def main():
             shutil.rmtree(config['output_dir'])
 
         os.makedirs(config['output_dir'])
+        os.makedirs(config['output_dir'] + 'pdfs')
+        os.makedirs(config['output_dir'] + 'pngs')
+        os.makedirs(config['output_dir'] + 'txts')
 
         targets = config['targets']
 
+        # key: target name; value: average nos
+        target_avgs_dict = {}
+        # key: target name; value: {id: average nos}
+        target_details_dict = {}
+        # key: target name; value: min nos
+        target_mins_dict = {}
+        # key: target name; value: max nos
+        target_maxes_dict = {}
         # key: target name; value: average no
         target_avg_dict = {}
-        # key: target name; value: {id: average no}
-        target_detail_dict = {}
-        # key: target name; value: min no
-        target_min_dict = {}
-        # key: target name; value: max no
-        target_max_dict = {}
 
         for target_key in targets:
             info("checking for %s" % target_key)
@@ -135,31 +141,35 @@ def main():
                 mins = list(np.minimum(mins, tmp_details))
                 maxes = list(np.maximum(maxes, tmp_details))
 
-            target_min_dict[target_key] = mins
-            target_max_dict[target_key] = maxes
-            target_detail_dict[target_key] = target_details
+            target_mins_dict[target_key] = mins
+            target_maxes_dict[target_key] = maxes
+            target_details_dict[target_key] = target_details
 
             avgs = list(map(lambda acc: float(acc)/float(base_no), accumulates))
             ok("total avg: %.2f" % avgs[-1], 1)
-            target_avg_dict[target_key] = avgs
+            target_avg_dict[target_key] = avgs[-1]
+            target_avgs_dict[target_key] = avgs
 
         # then we need to process the data and draw the plot
         avg_fig_id = 1
         min_max_fig_id = 2
-        detail_fig_id = 3
+        mix_fig_id = 3
+        detail_fig_id = 4
         avg_fig = plt.figure(avg_fig_id)
         avg_ax = avg_fig.add_subplot(111)
+        mix_fig = plt.figure(mix_fig_id)
+        mix_ax = mix_fig.add_subplot(111)
         min_max_fig = plt.figure(min_max_fig_id)
         min_max_ax = min_max_fig.add_subplot(111)
 
         # sort the group names, make sure every time the order is consistent
-        group_names = list(target_avg_dict.keys())
+        group_names = list(target_avgs_dict.keys())
         group_names.sort()
         bucket = config['bucket']
 
         for group_name in group_names:
 
-            avgs = target_avg_dict[group_name]
+            avgs = target_avgs_dict[group_name]
             # max_bin = max(known_bins)
             max_bin = len(avgs)
 
@@ -179,8 +189,8 @@ def main():
             else:
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name)
 
-            mins = target_min_dict[group_name]
-            maxes = target_max_dict[group_name]
+            mins = target_mins_dict[group_name]
+            maxes = target_maxes_dict[group_name]
             max_bin = min(len(mins), len(maxes))
             x_vals = []
             min_vals = []
@@ -206,10 +216,23 @@ def main():
                 min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', alpha=0.5)
                 min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name)
 
+            if group_name == 'fot-pot':
+                mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='solid', color='xkcd:scarlet')
+                mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], facecolor='xkcd:scarlet', alpha=0.2)
+            elif group_name == 'fot-cov':
+                mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashed', color='xkcd:slate blue')
+                mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], facecolor='xkcd:slate blue', alpha=0.2)
+            elif group_name == 'aflfast':
+                mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashdot', color='xkcd:olive yellow')
+                mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], facecolor='xkcd:olive yellow', alpha=0.2)
+            else:
+                mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name)
+                mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], alpha=0.2)
+
             detail_fig = plt.figure(detail_fig_id)
             detail_ax = detail_fig.add_subplot(111)
 
-            target_detail = target_detail_dict[group_name]
+            target_detail = target_details_dict[group_name]
             for did in target_detail:
                 details = target_detail[did]
                 max_bin = len(details)
@@ -220,25 +243,61 @@ def main():
                     y_vals.append(details[bin_no])
                 detail_ax.plot(x_vals[1:], y_vals[1:], label=group_name+'-'+str(did))
 
-            detail_plot_filename = config['output_dir'] + config['project'] + '-' + group_name + config['file_postfix']
+            detail_plot_filename_pdf = config['output_dir'] + 'pdfs/' + config['project'] + '-' + group_name + config['file_postfix'] + '.pdf'
+            detail_plot_filename_png = config['output_dir'] + 'pngs/' + config['project'] + '-' + group_name + config['file_postfix'] + '.png'
             detail_ax.set(xlabel='time (%s)' % bucket, ylabel=config['ylabel'])
             detail_ax.legend()
-            detail_fig.savefig(detail_plot_filename)
+            detail_fig.savefig(detail_plot_filename_pdf)
+            detail_fig.savefig(detail_plot_filename_png)
 
             detail_fig_id += 1
 
-        avg_plot_filename = config['output_dir'] + config['project'] + config['file_postfix']
+        # avg plot
+        avg_plot_filename_pdf = config['output_dir'] + 'pdfs/' + config['project'] + config['file_postfix'] + '.pdf'
+        avg_plot_filename_png = config['output_dir'] + 'pngs/' + config['project'] + config['file_postfix'] + '.png'
         avg_ax.set(xlabel='time (%s)' % bucket, ylabel='avg ' + config['ylabel'])
         # avg_ax.grid()
         avg_ax.legend()
-        avg_fig.savefig(avg_plot_filename)
+        avg_fig.savefig(avg_plot_filename_pdf)
+        avg_fig.savefig(avg_plot_filename_png)
 
-        min_max_plot_filename = config['output_dir'] + config['project'] + '-range' + config['file_postfix']
+        # mix plot
+        mix_plot_filename_pdf = config['output_dir'] + 'pdfs/' + config['project'] + '-mix' + config['file_postfix'] + '.pdf'
+        mix_plot_filename_png = config['output_dir'] + 'pngs/' + config['project'] + '-mix' + config['file_postfix'] + '.png'
+        mix_ax.set(xlabel='time (%s)' % bucket, ylabel='avg ' + config['ylabel'])
+        # avg_ax.grid()
+        mix_ax.legend()
+        mix_fig.savefig(mix_plot_filename_pdf)
+        mix_fig.savefig(mix_plot_filename_png)
+
+        # min max plot
+        min_max_plot_filename_pdf = config['output_dir'] + 'pdfs/' + config['project'] + '-range' + config['file_postfix'] + '.pdf'
+        min_max_plot_filename_png = config['output_dir'] + 'pngs/' + config['project'] + '-range' + config['file_postfix'] + '.png'
         min_max_ax.set(xlabel='time (%s)' % bucket, ylabel='range of ' + config['ylabel'])
         # avg_ax.grid()
         min_max_ax.legend(loc=0)
-        min_max_fig.savefig(min_max_plot_filename)
+        min_max_fig.savefig(min_max_plot_filename_pdf)
+        min_max_fig.savefig(min_max_plot_filename_png)
         # plt.show()
+
+        # backup the used data
+        for group_name in group_names:
+            target_details = target_details_dict[group_name]
+            for did in target_details:
+                data_file_name = config['output_dir'] + 'txts/' + group_name + '-' + str(did) + '.txt'
+                details = target_details[did]
+                with open(data_file_name, 'w') as data_fd:
+                    for detail in details:
+                        data_fd.write(str(detail) + '\n')
+            data_file_name = config['output_dir'] + 'txts/' + group_name + '-avg' + '.txt'
+            with open(data_file_name, 'w') as data_fd:
+                avgs = target_avgs_dict[group_name]
+                for avg in avgs:
+                    data_fd.write(str(avg) + '\n')
+        data_file_name = config['output_dir'] + 'txts/' + 'overall-avg' + '.txt'
+        with open(data_file_name, 'w') as data_fd:
+            for group_name in group_names:
+                data_fd.write(group_name + ':' + str(target_avg_dict[group_name]) + '\n')
 
 
 if __name__ == "__main__":
