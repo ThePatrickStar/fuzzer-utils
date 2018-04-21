@@ -4,6 +4,7 @@ import re
 import shutil
 import sys
 import matplotlib.pyplot as plt
+import numpy as np
 
 from collections import OrderedDict
 from common_utils import *
@@ -11,7 +12,7 @@ from args import *
 
 
 def sanitize_config(config):
-    required_params = ['targets', 'bucket', 'output_dir', 'project']
+    required_params = ['targets', 'bucket', 'output_dir', 'project', 'ylabel', 'file_postfix']
 
     valid_buckets = ['second', 'minute', 'hour', 'sec', 'min', 'hour', 's', 'm', 'h']
 
@@ -59,14 +60,14 @@ def sanitize_target(target):
 
 
 def main():
-    arg_parser = ArgParser(description='Analyze average edge coverage.')
+    arg_parser = ArgParser(description='Analyze average data of multiple files.')
     required_args = arg_parser.add_argument_group('required arguments')
     required_args.add_argument('-c', help='Path to the configuration json file.', required=True)
     # arg_parser.add_argument('-v', help="Verbose", required=False)
 
     args = arg_parser.parse_args()
 
-    info("Welcome to use the average edge coverage analysis utility")
+    info("Welcome to use the multi-run analysis utility")
 
     config_path = args.c
 
@@ -83,10 +84,14 @@ def main():
 
         targets = config['targets']
 
-        # key: target name; value: average edge no
-        target_avg_edge_dict = {}
-        # key: target name; value: {id: average edge no}
-        target_detail_edge_dict = {}
+        # key: target name; value: average no
+        target_avg_dict = {}
+        # key: target name; value: {id: average no}
+        target_detail_dict = {}
+        # key: target name; value: min no
+        target_min_dict = {}
+        # key: target name; value: max no
+        target_max_dict = {}
 
         for target_key in targets:
             info("checking for %s" % target_key)
@@ -101,10 +106,10 @@ def main():
             first_run = True
             max_bin = config['max_bin']
 
-            target_detail_edge_dict[target_key] = OrderedDict()
+            target_details = OrderedDict()
 
             for (did, data_file) in enumerate(data_files):
-                target_detail_edge_dict[target_key][did] = []
+                target_details[did] = []
                 with open(data_file) as data_fd:
                     lines = data_fd.readlines()
                     for (i, line) in enumerate(lines):
@@ -114,7 +119,7 @@ def main():
                         if bin_no != i+1:
                             danger("invalid file - bin_no(%d), line_no(%d)" % (bin_no, i), 1)
                             sys.exit(1)
-                        target_detail_edge_dict[target_key][did].append(edge_no)
+                        target_details[did].append(edge_no)
                         if bin_no == len(lines):
                             ok("%s: %d" % (data_file, edge_no), 1)
                         if first_run:
@@ -123,24 +128,38 @@ def main():
                             accumulates[i] += edge_no
                     first_run = False
 
+            mins = target_details[did]
+            maxes = target_details[did]
+            for did in target_details:
+                tmp_details = target_details[did]
+                mins = list(np.minimum(mins, tmp_details))
+                maxes = list(np.maximum(maxes, tmp_details))
+
+            target_min_dict[target_key] = mins
+            target_max_dict[target_key] = maxes
+            target_detail_dict[target_key] = target_details
+
             avgs = list(map(lambda acc: float(acc)/float(base_no), accumulates))
             ok("total avg: %.2f" % avgs[-1], 1)
-            target_avg_edge_dict[target_key] = avgs
+            target_avg_dict[target_key] = avgs
 
         # then we need to process the data and draw the plot
         avg_fig_id = 1
-        detail_fig_id = 2
+        min_max_fig_id = 2
+        detail_fig_id = 3
         avg_fig = plt.figure(avg_fig_id)
         avg_ax = avg_fig.add_subplot(111)
+        min_max_fig = plt.figure(min_max_fig_id)
+        min_max_ax = min_max_fig.add_subplot(111)
 
         # sort the group names, make sure every time the order is consistent
-        group_names = list(target_avg_edge_dict.keys())
+        group_names = list(target_avg_dict.keys())
         group_names.sort()
         bucket = config['bucket']
 
         for group_name in group_names:
 
-            avgs = target_avg_edge_dict[group_name]
+            avgs = target_avg_dict[group_name]
             # max_bin = max(known_bins)
             max_bin = len(avgs)
 
@@ -160,10 +179,37 @@ def main():
             else:
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name)
 
+            mins = target_min_dict[group_name]
+            maxes = target_max_dict[group_name]
+            max_bin = min(len(mins), len(maxes))
+            x_vals = []
+            min_vals = []
+            max_vals = []
+            for bin_no in range(0, max_bin):
+                x_vals.append(bin_no)
+                min_vals.append(mins[bin_no])
+                max_vals.append(maxes[bin_no])
+            if group_name == 'fot-pot':
+                min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', color='xkcd:scarlet', alpha=0.8)
+                min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', color='xkcd:scarlet', alpha=0.8)
+                min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name, facecolor='xkcd:scarlet', alpha=0.3)
+            elif group_name == 'fot-cov':
+                min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', color='xkcd:slate blue', alpha=0.8)
+                min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', color='xkcd:slate blue', alpha=0.8)
+                min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name, facecolor='xkcd:slate blue', alpha=0.3)
+            elif group_name == 'aflfast':
+                min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', color='xkcd:olive yellow', alpha=0.8)
+                min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', color='xkcd:olive yellow', alpha=0.8)
+                min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name, facecolor='xkcd:olive yellow', alpha=0.3)
+            else:
+                min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', alpha=0.5)
+                min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', alpha=0.5)
+                min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name)
+
             detail_fig = plt.figure(detail_fig_id)
             detail_ax = detail_fig.add_subplot(111)
 
-            target_detail = target_detail_edge_dict[group_name]
+            target_detail = target_detail_dict[group_name]
             for did in target_detail:
                 details = target_detail[did]
                 max_bin = len(details)
@@ -174,19 +220,24 @@ def main():
                     y_vals.append(details[bin_no])
                 detail_ax.plot(x_vals[1:], y_vals[1:], label=group_name+'-'+str(did))
 
-            detail_plot_filename = config['output_dir'] + config['project'] + '-' + group_name + '-edge-time.pdf'
-            detail_ax.set(xlabel='time (%s)' % bucket, ylabel='edge no #')
+            detail_plot_filename = config['output_dir'] + config['project'] + '-' + group_name + config['file_postfix']
+            detail_ax.set(xlabel='time (%s)' % bucket, ylabel=config['ylabel'])
             detail_ax.legend()
             detail_fig.savefig(detail_plot_filename)
 
             detail_fig_id += 1
 
-        avg_plot_filename = config['output_dir'] + config['project'] + '-edge-time.pdf'
-        avg_ax.set(xlabel='time (%s)' % bucket, ylabel='avg edge no #')
+        avg_plot_filename = config['output_dir'] + config['project'] + config['file_postfix']
+        avg_ax.set(xlabel='time (%s)' % bucket, ylabel='avg ' + config['ylabel'])
         # avg_ax.grid()
         avg_ax.legend()
-
         avg_fig.savefig(avg_plot_filename)
+
+        min_max_plot_filename = config['output_dir'] + config['project'] + '-range' + config['file_postfix']
+        min_max_ax.set(xlabel='time (%s)' % bucket, ylabel='range of ' + config['ylabel'])
+        # avg_ax.grid()
+        min_max_ax.legend(loc=0)
+        min_max_fig.savefig(min_max_plot_filename)
         # plt.show()
 
 
