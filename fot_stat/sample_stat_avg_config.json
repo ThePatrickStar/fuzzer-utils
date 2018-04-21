@@ -1,22 +1,21 @@
 {
   "targets": {
-    "fot-123": {
+    "fot-cyc100-all": {
       "data_files": [
-          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out1.json",
-          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out2.json",
-          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out3.json"
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-1.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-2.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-3.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-4.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-5.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-6.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-7.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-8.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-9.json",
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc100-result/out-cycle100-10.json"
       ],
-      "output_file": "./fot-123.json"
+      "output_file": "./fot-cyc100-all.json"
     },
-    "fot-456": {
-      "data_files": [
-          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out4.json",
-          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out5.json",
-          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out6.json"
-      ],
-      "output_file": "./fot-456.json"
-    },
-    "fot-all": {
+    "fot-cyc20-all": {
       "data_files": [
           "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out1.json",
           "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out2.json",
@@ -29,7 +28,13 @@
           "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out9.json",
           "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/stats_result/out10.json"
       ],
-      "output_file": "./fot-all.json"
+      "output_file": "./fot-cyc20-all.json"
+    },
+    "fot-cyc300-all": {
+      "data_files": [
+          "/home/wuxh/Projects/fuzz/moo_exp/fuzzer-utils/fot_stat/pngfix-cyc300-test/out-cycle300-1.json"
+      ],
+      "output_file": "./fot-cyc300-test.json"
     }
   }
 }

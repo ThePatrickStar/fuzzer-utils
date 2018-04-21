@@ -39,11 +39,11 @@ def sanitize_config(config):
 
 
 def sanitize_target(target):
-    required_params = ['data_files']
+    required_params = ['data_files', 'output_file']
 
     for param in required_params:
         if param not in target:
-            danger("%s is missing in target")
+            danger("%s is missing in target" % param)
             return False
 
     if len(target['data_files']) == 0:
