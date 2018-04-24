@@ -94,19 +94,23 @@ def get_stack_trace(asan_output):
     trace_funcs = []
     error_msg = ''
     for line in lines:
-        line = str(line).replace("'", "")[1:]
-        if 'The signal is caused by' in line:
-            error_msg = line.split('==')[2]
-            # info(error_msg)
-            start_stack_trace = True
-        if len(line.strip()) == 0 and start_stack_trace:
-            break
-        if start_stack_trace:
-            if 'Hint: ' not in line and 'The signal is caused by' not in line:
-                line = line.strip()
-                func_name = line.split()[3]
-                # ok(func_name, 1)
-                trace_funcs.append(func_name)
+        try:
+            line = str(line).replace("'", "")[1:]
+            if 'The signal is caused by' in line:
+                error_msg = line.split('==')[2]
+                # info(error_msg)
+                start_stack_trace = True
+            if len(line.strip()) == 0 and start_stack_trace:
+                break
+            if start_stack_trace:
+                if 'Hint: ' not in line and 'The signal is caused by' not in line:
+                    line = line.strip()
+                    func_name = line.split()[3]
+                    # ok(func_name, 1)
+                    trace_funcs.append(func_name)
+        except:
+            danger("cannot handle line: %s" % line)
+
     if len(trace_funcs) != 0:
         stack_trace = error_msg + ' ----- ' + ' <- '.join(trace_funcs)
     else:
