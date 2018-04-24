@@ -110,6 +110,7 @@ def get_stack_trace(asan_output):
                     trace_funcs.append(func_name)
         except:
             danger("cannot handle line: %s" % line)
+            info(asan_output)
 
     if len(trace_funcs) != 0:
         stack_trace = error_msg + ' ----- ' + ' <- '.join(trace_funcs)
