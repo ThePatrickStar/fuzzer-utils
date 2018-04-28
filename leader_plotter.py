@@ -124,9 +124,9 @@ def main():
                 x_vals.append(bin_no)
                 y_vals.append(leads[bin_no])
 
-            if tool_key == 'fot-pot':
+            if tool_key == 'Cerebro':
                 leader_ax.plot(x_vals[1:], y_vals[1:], label=tool_key, linestyle='solid', color='xkcd:scarlet')
-            elif tool_key == 'fot-cov':
+            elif tool_key == 'Cerebro-afl':
                 leader_ax.plot(x_vals[1:], y_vals[1:], label=tool_key, linestyle='dashed', color='xkcd:slate blue')
             elif tool_key == 'aflfast':
                 leader_ax.plot(x_vals[1:], y_vals[1:], label=tool_key, linestyle='dashdot', color='xkcd:olive yellow')

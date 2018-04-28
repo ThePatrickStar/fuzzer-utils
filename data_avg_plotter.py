@@ -180,9 +180,9 @@ def main():
                 x_vals.append(bin_no)
                 y_vals.append(avgs[bin_no])
 
-            if group_name == 'fot-pot':
+            if group_name == 'Cerebro':
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='solid', color='xkcd:scarlet')
-            elif group_name == 'fot-cov':
+            elif group_name == 'Cerebro-afl':
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashed', color='xkcd:slate blue')
             elif group_name == 'aflfast':
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashdot', color='xkcd:olive yellow')
@@ -199,11 +199,11 @@ def main():
                 x_vals.append(bin_no)
                 min_vals.append(mins[bin_no])
                 max_vals.append(maxes[bin_no])
-            if group_name == 'fot-pot':
+            if group_name == 'Cerebro':
                 min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', color='xkcd:scarlet', alpha=0.8)
                 min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', color='xkcd:scarlet', alpha=0.8)
                 min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name, facecolor='xkcd:scarlet', alpha=0.3)
-            elif group_name == 'fot-cov':
+            elif group_name == 'Cerebro-afl':
                 min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', color='xkcd:slate blue', alpha=0.8)
                 min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', color='xkcd:slate blue', alpha=0.8)
                 min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name, facecolor='xkcd:slate blue', alpha=0.3)
@@ -216,10 +216,10 @@ def main():
                 min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', alpha=0.5)
                 min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name)
 
-            if group_name == 'fot-pot':
+            if group_name == 'Cerebro':
                 mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='solid', color='xkcd:scarlet')
                 mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], facecolor='xkcd:scarlet', alpha=0.2)
-            elif group_name == 'fot-cov':
+            elif group_name == 'Cerebro-afl':
                 mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashed', color='xkcd:slate blue')
                 mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], facecolor='xkcd:slate blue', alpha=0.2)
             elif group_name == 'aflfast':
