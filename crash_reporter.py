@@ -96,18 +96,28 @@ def get_stack_trace(asan_output):
     for line in lines:
         try:
             line = str(line).replace("'", "")[1:]
-            if 'The signal is caused by' in line:
-                error_msg = line.split('==')[2]
+            if 'The signal is caused by' in line or 'ERROR: AddressSanitizer:' in line:
+                if 'The signal is caused by' in line:
+                    error_msg = line.split('==')[2]
+                else:
+                    error_msg = line.split(' ')[2]
                 # info(error_msg)
                 start_stack_trace = True
+                # ok("started stack trace")
             if len(line.strip()) == 0 and start_stack_trace:
                 break
             if start_stack_trace:
-                if 'Hint: ' not in line and 'The signal is caused by' not in line:
+                pattern = re.compile('.+#[0-9]+')
+                func_line = pattern.match(line) is not None
+                # if func_line:
+                #     ok("found func line %s" % line.strip(), 2)
+                if 'Hint: ' not in line and 'The signal is caused by' not in line and 'ERROR: AddressSanitizer:' not in line and func_line:
                     line = line.strip()
-                    func_name = line.split()[3]
-                    # ok(func_name, 1)
+                    func_name = line.split(' ')[3]
+                    # ok(func_name, 2)
                     trace_funcs.append(func_name)
+                    if len(trace_funcs) >= 3:
+                        break
         except:
             danger("cannot handle line: %s" % line)
             info(asan_output)
@@ -183,18 +193,21 @@ def main():
 
                             stack_trace = get_stack_trace(stderr)
 
+                            # if stack_trace is None:
+                            #     stack_trace = get_stack_trace(stdout)
+
                             if stack_trace not in found_traces and stack_trace is not None:
                                 found_traces.append(stack_trace)
                                 if stack_trace not in trace_crash_dict:
-                                    trace_crash_dict[stack_trace] = {'find_runs': 1, 'times': [bin_no]}
+                                    trace_crash_dict[stack_trace] = {'find_runs': 1, 'ff_times': [(crash_file, bin_no)]}
                                 else:
                                     trace_crash_dict[stack_trace]['find_runs'] += 1
-                                    trace_crash_dict[stack_trace]['times'].append(bin_no)
+                                    trace_crash_dict[stack_trace]['ff_times'].append((crash_file, bin_no))
 
             # update the mean time to discover for each trace
             for trace_name in trace_crash_dict:
                 trace_info = trace_crash_dict[trace_name]
-                avg_time = float(sum(trace_info['times']))/float(len(trace_info['times']))
+                avg_time = float(sum([pair[1] for pair in trace_info['ff_times']]))/float(len(trace_info['ff_times']))
                 trace_info['avg_time'] = avg_time
 
             # generate the output file
