@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import json
 import os
 import re
@@ -187,15 +189,20 @@ def main():
 
                             bin_no = int((crash_mtime - start_time) / bucket_margin)
 
-                            tmp_cmd = exec_cmd.replace('@@', crash_file)
+                            if "@@" in exec_cmd:
+                                tmp_cmd = exec_cmd.replace('@@', crash_file)
+                                proc = subprocess.Popen(tmp_cmd.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                            else:
+                                tmp_cmd = exec_cmd
+                                proc = subprocess.Popen(tmp_cmd.split(), stdin=open(crash_file), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-                            proc = subprocess.Popen(tmp_cmd.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
                             stdout, stderr = proc.communicate()
 
                             stack_trace = get_stack_trace(stderr)
 
                             # if stack_trace is None:
                             #     stack_trace = get_stack_trace(stdout)
+                            print("crash_file={}, bin_no={}".format(crash_file, bin_no))
 
                             if stack_trace not in found_traces and stack_trace is not None:
                                 found_traces.append(stack_trace)
