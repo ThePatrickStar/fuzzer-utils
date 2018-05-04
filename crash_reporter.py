@@ -175,6 +175,7 @@ def main():
 
             for crash_dir in crash_dirs:
                 crash_files = os.listdir(crash_dir)
+                crash_files.sort()
 
                 for crash_file in crash_files:
                     # we only check the fuzzer output file
