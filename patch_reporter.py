@@ -173,6 +173,9 @@ def main():
                             #     stack_trace = get_stack_trace(stdout)
                             log("queue_file={}, bin_no={}".format(crash_file, bin_no), 1)
 
+                            if rc == 0 or rc == 1:
+                                break
+
                             if rc not in found_traces and rc is not None:
                                 found_traces.append(rc)
                                 if rc not in trace_crash_dict:
