@@ -42,6 +42,10 @@ def sanitize_config(config):
         danger("No target specified")
         return False
 
+    if 'limit' not in config:
+        danger("No budget limit specified")
+        return False
+
     return True
 
 
@@ -110,6 +114,7 @@ def main():
 
         targets = config['targets']
         exec_cmd = config['exec_cmd']
+        bin_limit = config['limit']
 
         # default bucket margin is one hour
         bucket_margin = 3600
@@ -137,16 +142,25 @@ def main():
                 info("checking dir: %s" % crash_dir)
                 crash_files = os.listdir(crash_dir)
                 crash_files.sort()
+                passed_limit = False
 
                 for crash_file in crash_files:
+                    if passed_limit:
+                        break
                     # we only check the fuzzer output file
                     for pattern in config['crash_name_pattern']:
+                        if passed_limit:
+                            break
                         if re.fullmatch(pattern, crash_file) is not None:
                             crash_file = crash_dir + '/' + crash_file
 
                             crash_mtime = int(os.stat(crash_file).st_mtime)
 
                             bin_no = int((crash_mtime - start_time) / bucket_margin)
+
+                            if bin_no > bin_limit:
+                                passed_limit = True
+                                break
 
                             tmp_cmd = exec_cmd.replace('@@', crash_file)
 
@@ -162,10 +176,13 @@ def main():
                             if rc not in found_traces and rc is not None:
                                 found_traces.append(rc)
                                 if rc not in trace_crash_dict:
-                                    trace_crash_dict[rc] = {'find_runs': 1, 'ff_times': [(crash_file, bin_no)]}
+                                    trace_crash_dict[rc] = {'find_runs': 1, 'ff_times': [(crash_file, bin_no)], 'f_times': [bin_no]}
                                 else:
                                     trace_crash_dict[rc]['find_runs'] += 1
                                     trace_crash_dict[rc]['ff_times'].append((crash_file, bin_no))
+                                    trace_crash_dict[rc]['f_times'].append(bin_no)
+                            elif rc in found_traces:
+                                trace_crash_dict[rc]['f_times'].append(bin_no)
 
             # update the mean time to discover for each trace
             for trace_name in trace_crash_dict:

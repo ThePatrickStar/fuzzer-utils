@@ -40,6 +40,11 @@ def sanitize_config(config, basename, dir_path):
         warn('set to defalut value: [".+"]')
         config['crash_name_pattern'] = [".+"]
 
+    if 'limit' not in config:
+        warn("limit missing in config")
+        warn('set to default valeu: 3600')
+        config['limit'] = 3600
+
     if len(config['targets']) == 0:
         danger("No target specified")
         return False
