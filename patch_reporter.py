@@ -134,6 +134,7 @@ def main():
             found_traces = []
 
             for crash_dir in crash_dirs:
+                info("checking dir: %s" % crash_dir)
                 crash_files = os.listdir(crash_dir)
                 crash_files.sort()
 
@@ -156,6 +157,7 @@ def main():
 
                             # if stack_trace is None:
                             #     stack_trace = get_stack_trace(stdout)
+                            log("queue_file={}, bin_no={}".format(crash_file, bin_no), 1)
 
                             if rc not in found_traces and rc is not None:
                                 found_traces.append(rc)
