@@ -1,0 +1,48 @@
+{
+  "execute_command": "/media/lyk/data1/afl/mjs-new @@",
+  "false_path_pattern": "FOO_IS_CALLED",
+  "targets": {
+    "afl-normal-1": {
+      "entry_dirs": [
+        "/media/lyk/data1/afl/out_new1/queue"
+      ],
+      "need_execution": false
+    },
+    "afl-normal": {
+      "entry_dirs": [
+        "/media/lyk/data1/afl/out_new/queue"
+      ],
+      "need_execution": false
+    },
+    "afl-anti-false-1": {
+      "entry_dirs": [
+        "/media/lyk/data1/afl/out_anti_new/queue"
+      ],
+      "need_execution": false
+    },
+    "afl-anti-real-1": {
+      "entry_dirs": [
+        "/media/lyk/data1/afl/out_anti_new/queue"
+      ],
+      "need_execution": true
+    },
+    "afl-anti-false-jt1": {
+      "entry_dirs": [
+        "/media/lyk/data1/afl/out_anti_jt/queue"
+      ],
+      "need_execution": false
+    },
+    "afl-anti-real-jt1": {
+      "entry_dirs": [
+        "/media/lyk/data1/afl/out_anti_jt/queue"
+      ],
+      "need_execution": true
+    }
+  },
+  "project_id": "mjs",
+  "output_dir": "temp/mjs_rp",
+  "entry_name_pattern": ["id.+", "w.+"],
+  "bucket": "min",
+  "max_span": 24,
+  "plot_figure": true
+}
