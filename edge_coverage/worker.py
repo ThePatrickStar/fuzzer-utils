@@ -59,6 +59,21 @@ def sanitize_target(target):
     return True
 
 
+def get_bucket(hitcount):
+    if hitcount <= 4:
+        return hitcount
+    elif hitcount < 8:
+        return 4
+    elif hitcount < 16:
+        return 8
+    elif hitcount < 32:
+        return 16
+    elif hitcount < 128:
+        return 32
+    else:
+        return 128
+
+
 class Worker (threading.Thread):
     def __init__(self, tid, targets, config, bucket_margin):
         threading.Thread.__init__(self)
@@ -112,6 +127,9 @@ class Worker (threading.Thread):
 
             covered_edges = set()
 
+            # key: edge_id, value: hitcounts (bucket)
+            hitcount_dict = {}
+
             # key: bin_no, value: edge count
             edge_no_dict = {}
             # key: bin_no, value: entry count
@@ -124,6 +142,8 @@ class Worker (threading.Thread):
 
             checked_entries = []
 
+            new_paths = []
+
             # check each entry file
             for entry in entries:
                 # info("checking %s -- %d" % (entry.path, entry.m_time), 1)
@@ -132,12 +152,19 @@ class Worker (threading.Thread):
                 proc = subprocess.Popen(temp_command.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
                 proc.communicate()
 
+                is_new_path = False
+
                 with open(self.showmap_output) as showmap_output_file:
                     lines = showmap_output_file.readlines()
                     for line in lines:
                         try:
                             edge_id = int(line.split(':')[0])
-                            edge_count = int(line.split(':')[1])
+                            edge_count = get_bucket(int(line.split(':')[1]))
+                            if edge_id not in hitcount_dict:
+                                hitcount_dict[edge_id] = [edge_count]
+                            else:
+                                if edge_count not in hitcount_dict[edge_id]:
+                                    hitcount_dict[edge_id].append(edge_count)
                             covered_edges.add(edge_id)
                         except IndexError:
                             warn("cannot handle showmap output line: %s" % line, 1)
@@ -145,7 +172,9 @@ class Worker (threading.Thread):
                 # update the edge_no dict
                 # NOTE: temporarily no difference
                 checked_entries.append(entry)
-                entry_no_dict[entry.bin_no] = len(checked_entries)
+                if is_new_path:
+                    new_paths.append(entry)
+                entry_no_dict[entry.bin_no] = len(new_paths)
 
                 if entry.bin_no not in edge_no_dict:
                     edge_no_dict[entry.bin_no] = len(covered_edges)
