@@ -164,6 +164,7 @@ class Worker (threading.Thread):
                                 hitcount_dict[edge_id] = [edge_count]
                             else:
                                 if edge_count not in hitcount_dict[edge_id]:
+                                    is_new_path = True
                                     hitcount_dict[edge_id].append(edge_count)
                             covered_edges.add(edge_id)
                         except IndexError:
@@ -190,3 +191,4 @@ class Worker (threading.Thread):
             self.entry_group_dict[group_name] = entry_no_dict
             ok("%s - Total number of covered edges: %d" % (group_name, len(covered_edges)), 1)
             ok("%s - Total number of entries: %d" % (group_name, len(checked_entries)), 1)
+            ok("%s - Total number of real paths: %d" % (group_name, len(new_paths)), 1)
