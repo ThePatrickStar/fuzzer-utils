@@ -162,6 +162,7 @@ class Worker (threading.Thread):
                             edge_count = get_bucket(int(line.split(':')[1]))
                             if edge_id not in hitcount_dict:
                                 hitcount_dict[edge_id] = [edge_count]
+                                is_new_path = True
                             else:
                                 if edge_count not in hitcount_dict[edge_id]:
                                     is_new_path = True
