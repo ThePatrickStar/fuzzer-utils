@@ -37,11 +37,41 @@
         "/media/lyk/data1/afl/out_anti_jt/queue"
       ],
       "need_execution": true
+    },
+    "afl-anti-false-jl10-1": {
+      "entry_dirs": [
+        "/media/lyk/data1/bb_freq_profiler/temp/xxf_results/mjs/out_anti_1/queue"
+      ],
+      "need_execution": false
+    },
+    "afl-anti-real-jl10-1": {
+      "entry_dirs": [
+        "/media/lyk/data1/bb_freq_profiler/temp/xxf_results/mjs/out_anti_1/queue"
+      ],
+      "need_execution": true
+    },
+    "hongg-anti-false-jl10-1": {
+      "entry_dirs": [
+        "/media/lyk/data1/honggfuzz/test-mjs/queue_jt_1"
+      ],
+      "need_execution": false
+    },
+    "hongg-anti-real-jl10-1": {
+      "entry_dirs": [
+        "/media/lyk/data1/honggfuzz/test-mjs/queue_jt_1"
+      ],
+      "need_execution": true
+    },
+    "hongg-normal-1": {
+      "entry_dirs": [
+        "/media/lyk/data1/honggfuzz/test-mjs/queue_1"
+      ],
+      "need_execution": false
     }
   },
   "project_id": "mjs",
   "output_dir": "temp/mjs_rp",
-  "entry_name_pattern": ["id.+", "w.+"],
+  "entry_name_pattern": ["id.+", "w.+", ".+cov"],
   "bucket": "min",
   "max_span": 24,
   "plot_figure": true

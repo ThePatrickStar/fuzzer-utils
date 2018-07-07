@@ -67,8 +67,9 @@ def sanitize_target(target):
                 break
 
         if not stats_file_found and 'start_time' not in target:
-            danger('Neither start_time or fuzzer_stats found')
-            return False
+            warn('Neither start_time or fuzzer_stats found, will use the earliest m_time as the start time.')
+            target['start_time'] = None
+            return True
         elif stats_file_found:
             # coexistence allowed but warn user
             if 'start_time' in target:
@@ -210,19 +211,17 @@ def main():
         targets = config['targets']
 
         for target_name in targets:
-            if not sanitize_target(targets[target_name]):
-                exit(1)
-
-        for target_name in targets:
-            target = targets[target_name]
-            info("checking for %s" % target_name, 1)
-            start_time = int(target['start_time'])
-            group_name = target_name
-            entry_dirs = target['entry_dirs']
-            entries = []
             # key: bin_no, value: entry count
             entry_no_dict = {}
+            target = targets[target_name]
+            info("checking for %s" % target_name, 1)
 
+            if not sanitize_target(target):
+                danger("skipping invalid target", 1)
+                continue
+
+            entries = []
+            entry_dirs = target['entry_dirs']
             # collect entry files first
             for entry_dir in entry_dirs:
                 entry_files = os.listdir(entry_dir)
@@ -235,9 +234,9 @@ def main():
 
                             entry_mtime = int(os.stat(entry_file).st_mtime)
 
-                            bin_no = int((entry_mtime - start_time) / bucket_margin)
+                            # bin_no = int((entry_mtime - start_time) / self.bucket_margin)
 
-                            entry = Entry(entry_file, entry_mtime, bin_no)
+                            entry = Entry(entry_file, entry_mtime, 0)
 
                             entries.append(entry)
 
@@ -245,6 +244,16 @@ def main():
 
             # sort the entry file list according to creation time
             entries.sort(key=lambda x: x.m_time, reverse=False)
+
+            if target['start_time'] is None:
+                start_time = entries[0].m_time
+            else:
+                start_time = int(target['start_time'])
+
+            # update the bin_no after retrieving the start time
+            for entry in entries:
+                bin_no = int((entry.m_time - start_time) / bucket_margin)
+                entry.bin_no = bin_no
 
             checked_entries = []
 
