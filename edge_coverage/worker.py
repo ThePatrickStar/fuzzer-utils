@@ -81,6 +81,7 @@ class Worker (threading.Thread):
         self.targets = targets
         self.edge_group_dict = {}
         self.entry_group_dict = {}
+        self.entry_group_dict_alt = {}
         self.config = config
         self.showmap_output = config['showmap_output']+'_'+str(tid)
         self.base_command = config['showmap_command'].replace('##', self.showmap_output)
@@ -129,11 +130,15 @@ class Worker (threading.Thread):
 
             # key: edge_id, value: hitcounts (bucket)
             hitcount_dict = {}
+            # key: edge_id, value: hitcounts (no bucket)
+            hitcount_dict_alt = {}
 
             # key: bin_no, value: edge count
             edge_no_dict = {}
             # key: bin_no, value: entry count
             entry_no_dict = {}
+            # key: bin_no, value: entry count (no bucket)
+            entry_no_dict_alt = {}
 
             # update the bin_no after retrieving the start time
             for entry in entries:
@@ -143,6 +148,7 @@ class Worker (threading.Thread):
             checked_entries = []
 
             new_paths = []
+            new_paths_alt = []
 
             # check each entry file
             for entry in entries:
@@ -153,13 +159,16 @@ class Worker (threading.Thread):
                 proc.communicate()
 
                 is_new_path = False
+                is_new_path_alt = False
 
                 with open(self.showmap_output) as showmap_output_file:
                     lines = showmap_output_file.readlines()
                     for line in lines:
                         try:
                             edge_id = int(line.split(':')[0])
-                            edge_count = get_bucket(int(line.split(':')[1]))
+                            edge_count_alt = int(line.split(':')[1])
+                            edge_count = get_bucket(edge_count_alt)
+
                             if edge_id not in hitcount_dict:
                                 hitcount_dict[edge_id] = [edge_count]
                                 is_new_path = True
@@ -167,6 +176,14 @@ class Worker (threading.Thread):
                                 if edge_count not in hitcount_dict[edge_id]:
                                     is_new_path = True
                                     hitcount_dict[edge_id].append(edge_count)
+                            if edge_id not in hitcount_dict_alt:
+                                hitcount_dict_alt[edge_id] = [edge_count_alt]
+                                is_new_path_alt = True
+                            else:
+                                if edge_count_alt not in hitcount_dict_alt[edge_id]:
+                                    is_new_path_alt = True
+                                    hitcount_dict_alt[edge_id].append(edge_count_alt)
+
                             covered_edges.add(edge_id)
                         except IndexError:
                             warn("cannot handle showmap output line: %s" % line, 1)
@@ -176,7 +193,12 @@ class Worker (threading.Thread):
                 checked_entries.append(entry)
                 if is_new_path:
                     new_paths.append(entry)
+                if is_new_path_alt:
+                    new_paths_alt.append(entry)
+
                 entry_no_dict[entry.bin_no] = len(new_paths)
+
+                entry_no_dict_alt[entry.bin_no] = len(new_paths_alt)
 
                 if entry.bin_no not in edge_no_dict:
                     edge_no_dict[entry.bin_no] = len(covered_edges)
@@ -190,6 +212,8 @@ class Worker (threading.Thread):
 
             self.edge_group_dict[group_name] = edge_no_dict
             self.entry_group_dict[group_name] = entry_no_dict
+            self.entry_group_dict_alt[group_name] = entry_no_dict_alt
             ok("%s - Total number of covered edges: %d" % (group_name, len(covered_edges)), 1)
             ok("%s - Total number of entries: %d" % (group_name, len(checked_entries)), 1)
             ok("%s - Total number of real paths: %d" % (group_name, len(new_paths)), 1)
+            ok("%s - Total number of real paths (no bucket): %d" % (group_name, len(new_paths_alt)), 1)

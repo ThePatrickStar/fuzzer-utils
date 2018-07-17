@@ -8,7 +8,7 @@ from common_utils import *
 from args import *
 
 
-def plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, fig_no):
+def plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, fig_no, fname, title):
     # then we need to process the data and draw the plot
     fig = plt.figure(fig_no)
     ax = fig.add_subplot(111)
@@ -46,9 +46,9 @@ def plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, fig_no
         for (i, x) in enumerate(x_vals):
             data_dict[x] = y_vals[i]
 
-    edge_no_time_plot_filename = config['output_dir'] + '/' + "entry_no_over_time"
+    edge_no_time_plot_filename = config['output_dir'] + '/' + fname
     ax.set(xlabel='time (%s)' % bucket, ylabel='entry no #',
-           title='No of entries in queue over time')
+           title=title)
     ax.grid()
     ax.legend()
 

@@ -128,6 +128,8 @@ def main():
         edge_group_dict = {}
         # key: entry group name, value: entry_no_dict
         entry_group_dict = {}
+        # key: entry group name, value: entry_no_dict_alt
+        entry_group_dict_alt = {}
 
         targets = config['targets']
 
@@ -151,6 +153,8 @@ def main():
                 edge_group_dict[group] = worker.edge_group_dict[group]
             for group in worker.entry_group_dict:
                 entry_group_dict[group] = worker.entry_group_dict[group]
+            for group in worker.entry_group_dict_alt:
+                entry_group_dict_alt[group] = worker.entry_group_dict_alt[group]
 
         if bucket_margin == 3600:
             bucket_margin = 1
@@ -159,9 +163,11 @@ def main():
 
         if config['plot_figure']:
             plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, 1)
-            plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, 2)
+            plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, 2, "entry_no_over_time_bucket", 'No of entries in queue over time (bucket)')
+            plot_entry_over_time(config, entry_group_dict_alt, bucket, bucket_margin, 3, "entry_no_over_time", 'No of entries in queue over time')
 
-        collect_entry_over_time(config, entry_group_dict, bucket_margin)
+        collect_entry_over_time(config, entry_group_dict, bucket_margin, '_entry_time_bucket.txt')
+        collect_entry_over_time(config, entry_group_dict_alt, bucket_margin, '_entry_time.txt')
         collect_edge_over_time(config, edge_group_dict, bucket_margin)
 
 

@@ -7,7 +7,7 @@ from common_utils import *
 from args import *
 
 
-def collect_entry_over_time(config, entry_group_dict, bucket_margin):
+def collect_entry_over_time(config, entry_group_dict, bucket_margin, fname):
 
     # sort the group names, make sure every time the order is consistent
     group_names = list(entry_group_dict.keys())
@@ -41,7 +41,7 @@ def collect_entry_over_time(config, entry_group_dict, bucket_margin):
             data_dict[x] = y_vals[i]
 
         info("saving entry-time info for %s" % group_name)
-        data_file_name = config['output_dir'] + '/' + group_name + '_entry_time.txt'
+        data_file_name = config['output_dir'] + '/' + group_name + fname
         with open(data_file_name, 'w') as fp:
             for (i, x) in enumerate(x_vals):
                 fp.write('%d,%d\n' % (x, y_vals[i]))
