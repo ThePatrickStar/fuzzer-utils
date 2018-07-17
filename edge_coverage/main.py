@@ -146,6 +146,53 @@ def main():
         ok("starting %d workers" % len(workers))
         for worker in workers:
             worker.start()
+
+        remove_init_info = False
+        init_edges = 0
+        init_seeds = 0
+        init_entries = []
+        # optionally remove init seeds info
+        if 'init_seeds_dir' in config:
+            remove_init_info = True
+            init_files = os.listdir(config['init_seeds_dir'])
+            init_seeds = len(init_files)
+
+            for init_file in init_files:
+                init_file = config['init_seeds_dir'] + '/' + init_file
+
+                entry_mtime = int(os.stat(init_file).st_mtime)
+
+                # bin_no = int((entry_mtime - start_time) / self.bucket_margin)
+
+                entry = Entry(init_file, entry_mtime, 0)
+
+                init_entries.append(entry)
+
+            init_entries.sort(key=lambda x: x.m_time, reverse=False)
+
+            covered_edges = set()
+            showmap_output = config['showmap_output'] + '_main'
+            base_command = config['showmap_command'].replace('##', showmap_output)
+
+            for entry in init_entries:
+                # info("checking %s -- %d" % (entry.path, entry.m_time), 1)
+
+                temp_command = base_command.replace('@@', entry.path)
+                proc = subprocess.Popen(temp_command.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                proc.communicate()
+
+                with open(showmap_output) as showmap_output_file:
+                    lines = showmap_output_file.readlines()
+                    for line in lines:
+                        try:
+                            edge_id = int(line.split(':')[0])
+                            covered_edges.add(edge_id)
+                        except IndexError:
+                            warn("cannot handle showmap output line: %s" % line, 1)
+            init_edges = len(covered_edges)
+
+            info('{} initial seeds covered {} edges'.format(init_seeds, init_edges))
+
         for worker in workers:
             worker.join()
         for worker in workers:
@@ -162,13 +209,17 @@ def main():
             bucket_margin = 3600
 
         if config['plot_figure']:
-            plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, 1)
+            plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, 1, "edge_no_over_time", 'No of edges covered over time')
             plot_entry_over_time(config, entry_group_dict, bucket, bucket_margin, 2, "entry_no_over_time_bucket", 'No of entries in queue over time (bucket)')
             plot_entry_over_time(config, entry_group_dict_alt, bucket, bucket_margin, 3, "entry_no_over_time", 'No of entries in queue over time')
+            if remove_init_info:
+                plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, 4, "edges_found_time", 'No of edges discovered over time', True, init_edges)
 
         collect_entry_over_time(config, entry_group_dict, bucket_margin, '_entry_time_bucket.txt')
         collect_entry_over_time(config, entry_group_dict_alt, bucket_margin, '_entry_time.txt')
-        collect_edge_over_time(config, edge_group_dict, bucket_margin)
+        collect_edge_over_time(config, edge_group_dict, bucket_margin, '_edge_time.txt')
+        if remove_init_info:
+            collect_edge_over_time(config, edge_group_dict, bucket_margin, '_edge_time_found.txt', True, init_edges)
 
 
 if __name__ == "__main__":

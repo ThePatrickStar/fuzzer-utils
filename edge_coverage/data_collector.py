@@ -47,7 +47,7 @@ def collect_entry_over_time(config, entry_group_dict, bucket_margin, fname):
                 fp.write('%d,%d\n' % (x, y_vals[i]))
 
 
-def collect_edge_over_time(config, edge_group_dict, bucket_margin):
+def collect_edge_over_time(config, edge_group_dict, bucket_margin, fname, remove_init_edges=False, init_edges=0):
 
     # sort the group names, make sure every time the order is consistent
     group_names = list(edge_group_dict.keys())
@@ -76,10 +76,13 @@ def collect_edge_over_time(config, edge_group_dict, bucket_margin):
                 temp_bin_no -= 1
             calibrated_bin_no = bin_no + 1
             x_vals.append(calibrated_bin_no)
-            y_vals.append(temp_edge_no_dict[temp_bin_no])
+            if remove_init_edges:
+                y_vals.append(temp_edge_no_dict[temp_bin_no] - init_edges)
+            else:
+                y_vals.append(temp_edge_no_dict[temp_bin_no])
 
         info("saving edge-time info for %s" % group_name)
-        data_file_name = config['output_dir'] + '/' + group_name + '_edge_time.txt'
+        data_file_name = config['output_dir'] + '/' + group_name + fname
         with open(data_file_name, 'w') as fp:
             for (i, x) in enumerate(x_vals):
                 fp.write('%d,%d\n' % (x, y_vals[i]))
