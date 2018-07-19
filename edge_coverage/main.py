@@ -47,51 +47,6 @@ def sanitize_config(config):
     return True
 
 
-def sanitize_target(target):
-    required_params = ['entry_dirs']
-
-    for param in required_params:
-        if param not in target:
-            danger("%s is missing in target")
-            return False
-
-    if len(target['entry_dirs']) == 0:
-        danger('No entry dir specified for target')
-        return False
-
-    else:
-        # fuzzy finding
-        fuzzy_stats_loc = ['/../fuzzer_stats', '/fuzzer_stats']
-        stats_file_found = False
-        stats_file = None
-        for entry_dir in target['entry_dirs']:
-            for stats_loc in fuzzy_stats_loc:
-                stats_file = os.path.abspath(entry_dir) + stats_loc
-                if os.path.isfile(stats_file):
-                    stats_file_found = True
-                    break
-            if stats_file_found:
-                break
-
-        if not stats_file_found and 'start_time' not in target:
-            danger('Neither start_time or fuzzer_stats found')
-            return False
-        elif stats_file_found:
-            # coexistence allowed but warn user
-            if 'start_time' in target:
-                warn('Warning: both "start_time" and fuzzer_stats file exist! "fuzzer_stats" will be used.')
-            with open(stats_file, 'r') as statsfile:
-                for line in statsfile.readlines():
-                    if re.search('start_time', line):
-                        target['start_time'] = int(line.split()[2])
-                        break
-            if 'start_time' not in target:
-                danger('Bad format: no "start_time" found in fuzzer_stats')
-                return False
-
-    return True
-
-
 @timed
 def main():
     arg_parser = ArgParser(description='Analyze edge coverage.')
