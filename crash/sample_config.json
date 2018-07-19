@@ -1,4 +1,11 @@
 {
+  "project_id": "fast",
+  "showmap_command": "/usr/local/bin/afl-showmap -o ## -- /home/lol/test_cfast @@",
+  "showmap_output": "temp/tmp_map",
+  "filter_by_signal": {
+    "blacklist": [],
+    "whitelist": []
+  },
   "targets": {
     "afl-fidgety": {
       "entry_dirs": [
@@ -13,9 +20,8 @@
       "start_time": 1521534575
     }
   },
-  "project_id": "fast",
-  "output_dir": "temp/fast_crash",
   "entry_name_pattern": ["id.+", "w.+"],
+  "output_dir": "temp/fast_crash",
   "bucket": "min",
   "max_span": 24
 }
