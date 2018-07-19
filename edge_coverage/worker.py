@@ -74,7 +74,7 @@ def get_bucket(hitcount):
         return 128
 
 
-class Worker (threading.Thread):
+class Worker(threading.Thread):
     def __init__(self, tid, targets, config, bucket_margin):
         threading.Thread.__init__(self)
         self.tid = tid
@@ -83,7 +83,7 @@ class Worker (threading.Thread):
         self.entry_group_dict = {}
         self.entry_group_dict_alt = {}
         self.config = config
-        self.showmap_output = config['showmap_output']+'_'+str(tid)
+        self.showmap_output = config['showmap_output'] + '_' + str(tid)
         self.base_command = config['showmap_command'].replace('##', self.showmap_output)
         self.bucket_margin = bucket_margin
 
