@@ -16,6 +16,8 @@ from entry import *
 from crash_time_plotter import *
 from data_collector import *
 from edge_coverage.worker import get_bucket
+
+
 # from edge_coverage.worker import sanitize_target
 
 
@@ -93,6 +95,46 @@ def sanitize_target(target):
     return True
 
 
+def get_signal_filter_list(config):
+    blacklist = []
+    whitelist = []
+    if 'filter_by_signal' in config.keys():
+        filter_list_names = config['filter_by_signal'].keys()
+        if 'blacklist' in filter_list_names:
+            blacklist = config['filter_by_signal']['blacklist']
+        if 'whitelist' in filter_list_names:
+            whitelist = config['filter_by_signal']['whitelist']
+        if len(blacklist) != 0 and len(whitelist) != 0:
+            warn("Warning: both whitelist and blacklist provided, both will be honored, which is erroneous")
+        elif len(blacklist) == 0 and len(whitelist) == 0:
+            info("no blacklist or whitelist for signals provided in configuration file")
+    else:
+        info("no blacklist or whitelist for signals provided in configuration file")
+    # blacklist = blacklist if len(blacklist) != 0 else None
+    # whitelist = whitelist if len(whitelist) != 0 else None
+    return blacklist, whitelist
+
+
+def is_good_signal(blacklist, whitelist, signal):
+    not_in_blacklist = True
+    in_whitelist = True
+    if blacklist is not None and len(blacklist) != 0:
+        not_in_blacklist = True if signal not in blacklist else False
+    if whitelist is not None and len(whitelist) != 0:
+        in_whitelist = True if signal in whitelist else False
+    return not_in_blacklist and in_whitelist
+
+
+def get_signal(showmap_stderr, seed_path):
+    signal_number = 0
+    signal_line = re.findall("\+\+\+ Program killed by signal [0-9]+ \+\+\+", showmap_stderr)
+    if len(signal_line) != 0:
+        signal_number = int(re.findall('[0-9]+', signal_line[0])[0])
+    else:
+        warn("no signal returned in this crash @ {0}".format(seed_path))
+    return signal_number
+
+
 def inspect_bitmap(bitmap_file, hit_count_bucket, hit_count_alt, *covered_edges):
     is_new_path = False
     is_new_path_alt = False
@@ -146,10 +188,13 @@ def main():
             sys.exit(1)
 
         if os.path.isdir(config['output_dir']):
-            warn("output dir %s exists, we will clear it this time" % config['output_dir'])
+            warn("Warning: output dir %s exists, we will clear it this time" % config['output_dir'])
             shutil.rmtree(config['output_dir'])
 
         os.makedirs(config['output_dir'])
+
+        # load whitelist or blacklist
+        blacklist, whitelist = get_signal_filter_list(config)
 
         # default bucket margin is one hour
         bucket_margin = 3600
@@ -215,13 +260,15 @@ def main():
             base_command = config['showmap_command'].replace('##', map_file)
             # check each entry file
             for entry in entries:
+                checked_entries.append(entry)
                 entry.bin_no = int((entry.m_time - start_time) / bucket_margin)
                 temp_command = base_command.replace('@@', entry.path)
                 run_showmap = subprocess.Popen(temp_command.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-                run_showmap.communicate()
-                # TODO: handle stderr/stdout to get signal
+                showmap_stdout, showmap_stderr = run_showmap.communicate()
+                signal_number = get_signal(str(showmap_stderr), entry.path)
+                if not is_good_signal(blacklist, whitelist, signal_number):
+                    continue
                 is_new_path, is_new_path_alt = inspect_bitmap(map_file, hitcount_dict, hitcount_dict_alt)
-                checked_entries.append(entry)
                 if is_new_path:
                     uniq_crashes.append(entry)
                 if is_new_path_alt:
@@ -230,6 +277,8 @@ def main():
                 uniqcrash_num_dict[entry.bin_no] = len(uniq_crashes)
                 uniqcrash_num_dict_alt[entry.bin_no] = len(uniq_crashes_alt)
 
+            if 0 not in allcrash_num_dict:
+                allcrash_num_dict[0] = 0
             if 0 not in uniqcrash_num_dict:
                 uniqcrash_num_dict[0] = 0
             if 0 not in uniqcrash_num_dict_alt:
@@ -248,9 +297,13 @@ def main():
             bucket_margin = 3600
 
         if config['plot_figure']:
-            plot_crash_over_time(config, entry_group_dict, bucket, bucket_margin, 1, "crash_no_over_time", 'Number of crashes over time')
-            plot_crash_over_time(config, crash_group_dict, bucket, bucket_margin, 2, "uniq_crash_over_time_bucket", 'Number of unique (w/ bucket) crashes over time')
-            plot_crash_over_time(config, crash_group_dict_alt, bucket, bucket_margin, 3, "uniq_crash_over_time_without_bucket", 'Number of unique (w/o bucket) crashes over time')
+            plot_crash_over_time(config, entry_group_dict, bucket, bucket_margin, 1, "crash_no_over_time",
+                                 'Number of crashes over time')
+            plot_crash_over_time(config, crash_group_dict, bucket, bucket_margin, 2, "uniq_crash_over_time_bucket",
+                                 'Number of unique (w/ bucket) crashes over time')
+            plot_crash_over_time(config, crash_group_dict_alt, bucket, bucket_margin, 3,
+                                 "uniq_crash_over_time_without_bucket",
+                                 'Number of unique (w/o bucket) crashes over time')
 
         collect_crash_over_time(config, entry_group_dict, bucket_margin, '_all_crash_time.txt')
         collect_crash_over_time(config, crash_group_dict, bucket_margin, '_uniq_crash_time_bucket.txt')
