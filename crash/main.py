@@ -82,7 +82,7 @@ def sanitize_target(target):
         elif stats_file_found:
             # coexistence allowed but warn user
             if 'start_time' in target:
-                warn('Warning: both "start_time" and fuzzer_stats file exist! "fuzzer_stats" will be used.')
+                warn('both "start_time" and fuzzer_stats file exist! "fuzzer_stats" will be used.')
             with open(stats_file, 'r') as statsfile:
                 for line in statsfile.readlines():
                     if re.search('start_time', line):
@@ -105,9 +105,9 @@ def get_signal_filter_list(config):
         if 'whitelist' in filter_list_names:
             whitelist = config['filter_by_signal']['whitelist']
         if len(blacklist) != 0 and len(whitelist) != 0:
-            warn("Warning: both whitelist and blacklist provided, both will be honored, which is erroneous")
+            warn("both whitelist and blacklist provided, both will be honored, which is erroneous")
         elif len(blacklist) == 0 and len(whitelist) == 0:
-            info("no blacklist or whitelist for signals provided in configuration file")
+            info("Signal Filter: no blacklist or whitelist for signals provided in configuration file")
     else:
         info("no blacklist or whitelist for signals provided in configuration file")
     # blacklist = blacklist if len(blacklist) != 0 else None
@@ -188,7 +188,7 @@ def main():
             sys.exit(1)
 
         if os.path.isdir(config['output_dir']):
-            warn("Warning: output dir %s exists, we will clear it this time" % config['output_dir'])
+            warn("output dir %s exists, we will clear it this time" % config['output_dir'])
             shutil.rmtree(config['output_dir'])
 
         os.makedirs(config['output_dir'])

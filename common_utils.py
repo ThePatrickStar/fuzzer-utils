@@ -6,7 +6,6 @@ import time
 
 
 def ascii_print(func):
-
     def print_wrapper(content, indent=0):
         try:
             func(content, indent=indent)
@@ -17,7 +16,6 @@ def ascii_print(func):
 
 
 def timed(func):
-
     def time_wrapper(**kwargs):
         start_time = time.time()
         func(**kwargs)
@@ -32,7 +30,7 @@ def warn(content, indent=0):
     indents = ''
     for i in range(0, indent):
         indents += '    '
-    print(indents + '\033[93m'+str(content)+'\033[0m')
+    print(indents + '\033[93m' + "[Warning] " + str(content) + '\033[0m')
 
 
 @ascii_print
@@ -40,7 +38,7 @@ def ok(content, indent=0):
     indents = ''
     for i in range(0, indent):
         indents += '    '
-    print(indents + '\033[92m'+str(content)+'\033[0m')
+    print(indents + '\033[92m' + str(content) + '\033[0m')
 
 
 @ascii_print
@@ -48,7 +46,7 @@ def info(content, indent=0):
     indents = ''
     for i in range(0, indent):
         indents += '    '
-    print(indents + '\033[94m'+str(content)+'\033[0m')
+    print(indents + '\033[94m' + str(content) + '\033[0m')
 
 
 @ascii_print
@@ -56,7 +54,7 @@ def danger(content, indent=0):
     indents = ''
     for i in range(0, indent):
         indents += '    '
-    print(indents + '\033[91m'+str(content)+'\033[0m')
+    print(indents + '\033[91m' + "[Danger] " + str(content) + '\033[0m')
 
 
 @ascii_print
