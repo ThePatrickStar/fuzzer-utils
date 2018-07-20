@@ -7,7 +7,7 @@ from common_utils import *
 from args import *
 
 
-def collect_crash_over_time(config, entry_group_dict, bucket_margin):
+def collect_crash_over_time(config, entry_group_dict, bucket_margin, fname):
 
     # sort the group names, make sure every time the order is consistent
     group_names = list(entry_group_dict.keys())
@@ -40,8 +40,8 @@ def collect_crash_over_time(config, entry_group_dict, bucket_margin):
         for (i, x) in enumerate(x_vals):
             data_dict[x] = y_vals[i]
 
-        info("saving crash-time info for %s" % group_name)
-        data_file_name = config['output_dir'] + '/' + group_name + '_crash_time.txt'
+        data_file_name = config['output_dir'] + '/' + group_name + fname
+        info("saving crash-time info for {0} into {1}".format(group_name, data_file_name))
         with open(data_file_name, 'w') as fp:
             for (i, x) in enumerate(x_vals):
                 fp.write('%d,%d\n' % (x, y_vals[i]))

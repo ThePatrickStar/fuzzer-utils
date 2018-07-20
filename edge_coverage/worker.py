@@ -188,8 +188,6 @@ class Worker(threading.Thread):
                         except IndexError:
                             warn("cannot handle showmap output line: %s" % line, 1)
 
-                # update the edge_no dict
-                # NOTE: temporarily no difference
                 checked_entries.append(entry)
                 if is_new_path:
                     new_paths.append(entry)
@@ -200,6 +198,8 @@ class Worker(threading.Thread):
 
                 entry_no_dict_alt[entry.bin_no] = len(new_paths_alt)
 
+                # update the edge_no dict
+                # NOTE: temporarily no difference
                 if entry.bin_no not in edge_no_dict:
                     edge_no_dict[entry.bin_no] = len(covered_edges)
                 else:

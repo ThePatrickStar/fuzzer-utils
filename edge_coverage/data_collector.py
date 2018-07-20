@@ -40,8 +40,8 @@ def collect_entry_over_time(config, entry_group_dict, bucket_margin, fname):
         for (i, x) in enumerate(x_vals):
             data_dict[x] = y_vals[i]
 
-        info("saving entry-time info for %s" % group_name)
         data_file_name = config['output_dir'] + '/' + group_name + fname
+        info("saving entry-time info for {0} into {1}".format(group_name, data_file_name))
         with open(data_file_name, 'w') as fp:
             for (i, x) in enumerate(x_vals):
                 fp.write('%d,%d\n' % (x, y_vals[i]))

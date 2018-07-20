@@ -19,37 +19,6 @@ from edge_coverage.worker import get_bucket
 # from edge_coverage.worker import sanitize_target
 
 
-def inspect_bitmap(bitmap_file, hit_count_bucket, hit_count_alt, covered_edges):
-    is_new_path = False
-    is_new_path_alt = False
-    with open(bitmap_file) as bitmap_f:
-        for line in bitmap_f.readlines():
-            try:
-                edge_id = int(line.split(':')[0])
-                edge_count_alt = int(line.split(':')[1])
-                edge_count = get_bucket(edge_count_alt)  # with bucket
-
-                if edge_id not in hit_count_bucket:
-                    hit_count_bucket[edge_id] = [edge_count]
-                    is_new_path = True
-                else:
-                    if edge_count not in hit_count_bucket[edge_id]:
-                        is_new_path = True
-                        hit_count_bucket[edge_id].append(edge_count)
-                if edge_id not in hit_count_alt:
-                    hit_count_alt[edge_id] = [edge_count_alt]
-                    is_new_path_alt = True
-                else:
-                    if edge_count_alt not in hit_count_alt[edge_id]:
-                        is_new_path_alt = True
-                        hit_count_alt[edge_id].append(edge_count_alt)
-
-                covered_edges.add(edge_id)
-            except IndexError:
-                warn("cannot handle showmap output line: %s" % line, 1)
-    return [is_new_path, is_new_path_alt]
-
-
 def sanitize_config(config):
     required_params = ['showmap_command', 'output_dir', 'targets', 'entry_name_pattern', 'bucket']
 
@@ -124,6 +93,41 @@ def sanitize_target(target):
     return True
 
 
+def inspect_bitmap(bitmap_file, hit_count_bucket, hit_count_alt, *covered_edges):
+    is_new_path = False
+    is_new_path_alt = False
+    with open(bitmap_file) as bitmap_f:
+        for line in bitmap_f.readlines():
+            try:
+                edge_id = int(line.split(':')[0])
+
+                edge_count_alt = int(line.split(':')[1])
+                if edge_id not in hit_count_alt:
+                    hit_count_alt[edge_id] = [edge_count_alt]
+                    is_new_path_alt = True
+                else:
+                    if edge_count_alt not in hit_count_alt[edge_id]:
+                        is_new_path_alt = True
+                        hit_count_alt[edge_id].append(edge_count_alt)
+
+                edge_count = get_bucket(edge_count_alt)  # with bucket
+                if edge_id not in hit_count_bucket:
+                    hit_count_bucket[edge_id] = [edge_count]
+                    is_new_path = True
+                else:
+                    if edge_count not in hit_count_bucket[edge_id]:
+                        is_new_path = True
+                        hit_count_bucket[edge_id].append(edge_count)
+
+                # useful to edge_coverage only
+                if len(covered_edges) == 1:
+                    covered_edges[0].add(edge_id)
+
+            except IndexError:
+                warn("cannot handle showmap output line: %s" % line, 1)
+    return [is_new_path, is_new_path_alt]
+
+
 def main():
     arg_parser = ArgParser(description='Analyze crash information (statistically & statically).')
     required_args = arg_parser.add_argument_group('required arguments')
@@ -155,8 +159,11 @@ def main():
         elif bucket.lower() in ['second', 'sec', 's']:
             bucket_margin = 1
 
-        # key: entry group name, value: edge_no_dict
+        # key: entry group name, value: entry_num_dict (crashes not considering uniqueness)
         entry_group_dict = {}
+        # key: entry group name, value: uniqcrash_num_dict (crashes considering uniqueness)
+        crash_group_dict = {}
+        crash_group_dict_alt = {}
 
         targets = config['targets']
 
@@ -191,20 +198,19 @@ def main():
                 start_time = int(target['start_time'])
 
             checked_entries = []
-            new_paths = []
-            new_paths_alt = []
-            covered_edges = set()
+            uniq_crashes = []
+            uniq_crashes_alt = []
 
             # key: edge_id, value: hitcounts (bucket)
             hitcount_dict = {}
             # key: edge_id, value: hitcounts (no bucket)
             hitcount_dict_alt = {}
-            # key: bin_no, value: count
-            crash_no_dict = {}
-            # key: bin_no, value: entry count
-            entry_no_dict = {}
-            # key: bin_no, value: entry count (no bucket)
-            entry_no_dict_alt = {}
+            # key: bin_no, value: number of all crashes
+            allcrash_num_dict = {}
+            # key: bin_no, value: number of unique crashes
+            uniqcrash_num_dict = {}
+            # key: bin_no, value: number of unique crashes (no bucket)
+            uniqcrash_num_dict_alt = {}
             map_file = config['showmap_output'] + '_crash'
             base_command = config['showmap_command'].replace('##', map_file)
             # check each entry file
@@ -214,25 +220,27 @@ def main():
                 run_showmap = subprocess.Popen(temp_command.split(' '), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
                 run_showmap.communicate()
                 # TODO: handle stderr/stdout to get signal
-                is_new_path, is_new_path_alt = inspect_bitmap(map_file, hitcount_dict, hitcount_dict_alt, covered_edges)
+                is_new_path, is_new_path_alt = inspect_bitmap(map_file, hitcount_dict, hitcount_dict_alt)
                 checked_entries.append(entry)
                 if is_new_path:
-                    new_paths.append(entry)
+                    uniq_crashes.append(entry)
                 if is_new_path_alt:
-                    new_paths_alt.append(entry)
-                entry_no_dict[entry.bin_no] = len(new_paths)
-                entry_no_dict_alt[entry.bin_no] = len(new_paths_alt)
+                    uniq_crashes_alt.append(entry)
+                allcrash_num_dict[entry.bin_no] = len(checked_entries)
+                uniqcrash_num_dict[entry.bin_no] = len(uniq_crashes)
+                uniqcrash_num_dict_alt[entry.bin_no] = len(uniq_crashes_alt)
 
-                # update the crash_no dict
-                crash_no_dict[entry.bin_no] = len(covered_edges)
+            if 0 not in uniqcrash_num_dict:
+                uniqcrash_num_dict[0] = 0
+            if 0 not in uniqcrash_num_dict_alt:
+                uniqcrash_num_dict_alt[0] = 0
+            entry_group_dict[group_name] = allcrash_num_dict
+            crash_group_dict[group_name] = uniqcrash_num_dict
+            crash_group_dict_alt[group_name] = uniqcrash_num_dict_alt
 
-            if 0 not in crash_no_dict:
-                crash_no_dict[0] = 0
-            if 0 not in entry_no_dict:
-                entry_no_dict[0] = 0
-            entry_group_dict[group_name] = crash_no_dict
-
-            ok("%s - Total number of unique crashes: %d" % (group_name, len(checked_entries)))
+            ok("%s - Total number of crashes: %d" % (group_name, len(checked_entries)))
+            ok("%s - Total number of unique crashes (w/  bucket): %d" % (group_name, len(uniq_crashes)))
+            ok("%s - Total number of unique crashes (w/o bucket): %d" % (group_name, len(uniq_crashes_alt)))
 
         if bucket_margin == 3600:
             bucket_margin = 1
@@ -240,9 +248,13 @@ def main():
             bucket_margin = 3600
 
         if config['plot_figure']:
-            plot_crash_over_time(config, entry_group_dict, bucket, bucket_margin, 1)
+            plot_crash_over_time(config, entry_group_dict, bucket, bucket_margin, 1, "crash_no_over_time", 'Number of crashes over time')
+            plot_crash_over_time(config, crash_group_dict, bucket, bucket_margin, 2, "uniq_crash_over_time_bucket", 'Number of unique (w/ bucket) crashes over time')
+            plot_crash_over_time(config, crash_group_dict_alt, bucket, bucket_margin, 3, "uniq_crash_over_time_without_bucket", 'Number of unique (w/o bucket) crashes over time')
 
-        collect_crash_over_time(config, entry_group_dict, bucket_margin)
+        collect_crash_over_time(config, entry_group_dict, bucket_margin, '_all_crash_time.txt')
+        collect_crash_over_time(config, crash_group_dict, bucket_margin, '_uniq_crash_time_bucket.txt')
+        collect_crash_over_time(config, crash_group_dict_alt, bucket_margin, '_uniq_crash_time_without_bucket.txt')
 
 
 if __name__ == "__main__":
