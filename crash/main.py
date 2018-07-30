@@ -77,8 +77,9 @@ def sanitize_target(target):
                 break
 
         if not stats_file_found and 'start_time' not in target:
-            danger('Neither start_time or fuzzer_stats found')
-            return False
+            warn('Neither start_time or fuzzer_stats found, will use the earliest m_time as the start time.')
+            target['start_time'] = None
+            return True
         elif stats_file_found:
             # coexistence allowed but warn user
             if 'start_time' in target:

@@ -18,7 +18,7 @@ def collect_entry_over_time(config, entry_group_dict, bucket_margin, fname):
 
         if 0 not in temp_entry_no_dict:
             danger('Wrongly processed dict for %s!' % group_name)
-            sys.exit(1)
+            # sys.exit(1)
 
         known_bins = list(temp_entry_no_dict.keys())
         known_bins.sort()
@@ -58,7 +58,7 @@ def collect_edge_over_time(config, edge_group_dict, bucket_margin, fname, remove
 
         if 0 not in temp_edge_no_dict:
             danger('Wrongly processed dict for %s!' % group_name)
-            sys.exit(1)
+            # sys.exit(1)
 
         known_bins = list(temp_edge_no_dict.keys())
         known_bins.sort()
