@@ -188,6 +188,8 @@ def main():
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashed', color='xkcd:slate blue')
             elif group_name == 'aflfast':
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashdot', color='xkcd:olive yellow')
+            elif group_name == 'afl':
+                avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle=':', color='xkcd:slate grey')
             else:
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name)
 
@@ -213,6 +215,10 @@ def main():
                 min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', color='xkcd:olive yellow', alpha=0.8)
                 min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', color='xkcd:olive yellow', alpha=0.8)
                 min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name, facecolor='xkcd:olive yellow', alpha=0.3)
+            elif group_name == 'afl':
+                min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', color='xkcd:slate grey', alpha=0.8)
+                min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', color='xkcd:slate grey', alpha=0.8)
+                min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name, facecolor='xkcd:slate grey', alpha=0.3)
             else:
                 min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', alpha=0.5)
                 min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', alpha=0.5)
@@ -227,6 +233,9 @@ def main():
             elif group_name == 'aflfast':
                 mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashdot', color='xkcd:olive yellow')
                 mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], facecolor='xkcd:olive yellow', alpha=0.2)
+            elif group_name == 'afl':
+                mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dotted', color='xkcd:slate grey')
+                mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], facecolor='xkcd:slate grey', alpha=0.2)
             else:
                 mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name)
                 mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], alpha=0.2)
