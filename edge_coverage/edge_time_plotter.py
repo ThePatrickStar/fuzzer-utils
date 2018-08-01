@@ -22,7 +22,7 @@ def plot_edge_over_time(config, edge_group_dict, bucket, bucket_margin, fig_no, 
 
         if 0 not in temp_edge_no_dict:
             danger('Wrongly processed dict for %s!' % group_name)
-            sys.exit(1)
+            # sys.exit(1)
 
         known_bins = list(temp_edge_no_dict.keys())
         known_bins.sort()

@@ -43,6 +43,11 @@ def sanitize_config(config):
     if 'max_bin' not in config:
         config['max_bin'] = -1
 
+    if 'limit' not in config:
+        config['limit'] = None
+    else:
+        config['limit'] = int(config['limit'])
+
     return True
 
 
@@ -175,6 +180,10 @@ def main():
             # max_bin = max(known_bins)
             max_bin = len(avgs)
 
+            if config['limit'] is not None:
+                if max_bin > config['limit']:
+                    max_bin = config['limit']
+
             x_vals = []
             y_vals = []
 
@@ -196,6 +205,11 @@ def main():
             mins = target_mins_dict[group_name]
             maxes = target_maxes_dict[group_name]
             max_bin = min(len(mins), len(maxes))
+
+            if config['limit'] is not None:
+                if max_bin > config['limit']:
+                    max_bin = config['limit']
+
             x_vals = []
             min_vals = []
             max_vals = []
@@ -247,6 +261,11 @@ def main():
             for did in target_detail:
                 details = target_detail[did]
                 max_bin = len(details)
+
+                if config['limit'] is not None:
+                    if max_bin > config['limit']:
+                        max_bin = config['limit']
+
                 x_vals = []
                 y_vals = []
                 for bin_no in range(0, max_bin):
