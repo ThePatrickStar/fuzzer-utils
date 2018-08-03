@@ -22,7 +22,7 @@ def plot_crash_over_time(config, entry_group_dict, bucket, bucket_margin, fig_no
 
         if 0 not in temp_entry_no_dict:
             danger('Wrongly processed dict for %s!' % group_name)
-            sys.exit(1)
+            # sys.exit(1)
 
         known_bins = list(temp_entry_no_dict.keys())
         known_bins.sort()

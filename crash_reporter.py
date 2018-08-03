@@ -50,7 +50,7 @@ def sanitize_target(target):
 
     for param in required_params:
         if param not in target:
-            danger("%s is missing in target")
+            danger("%s is missing in target" % param)
             return False
 
     if len(target['crash_dirs']) == 0:

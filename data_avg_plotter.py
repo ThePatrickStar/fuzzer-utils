@@ -43,6 +43,11 @@ def sanitize_config(config):
     if 'max_bin' not in config:
         config['max_bin'] = -1
 
+    if 'limit' not in config:
+        config['limit'] = None
+    else:
+        config['limit'] = int(config['limit'])
+
     return True
 
 
@@ -175,6 +180,10 @@ def main():
             # max_bin = max(known_bins)
             max_bin = len(avgs)
 
+            if config['limit'] is not None:
+                if max_bin > config['limit']:
+                    max_bin = config['limit']
+
             x_vals = []
             y_vals = []
 
@@ -188,12 +197,19 @@ def main():
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashed', color='xkcd:slate blue')
             elif group_name == 'aflfast':
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashdot', color='xkcd:olive yellow')
+            elif group_name == 'afl':
+                avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle=':', color='xkcd:slate grey')
             else:
                 avg_ax.plot(x_vals[1:], y_vals[1:], label=group_name)
 
             mins = target_mins_dict[group_name]
             maxes = target_maxes_dict[group_name]
             max_bin = min(len(mins), len(maxes))
+
+            if config['limit'] is not None:
+                if max_bin > config['limit']:
+                    max_bin = config['limit']
+
             x_vals = []
             min_vals = []
             max_vals = []
@@ -213,6 +229,10 @@ def main():
                 min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', color='xkcd:olive yellow', alpha=0.8)
                 min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', color='xkcd:olive yellow', alpha=0.8)
                 min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name, facecolor='xkcd:olive yellow', alpha=0.3)
+            elif group_name == 'afl':
+                min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', color='xkcd:slate grey', alpha=0.8)
+                min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', color='xkcd:slate grey', alpha=0.8)
+                min_max_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], label=group_name, facecolor='xkcd:slate grey', alpha=0.3)
             else:
                 min_max_ax.plot(x_vals[1:], min_vals[1:], linestyle='dotted', alpha=0.5)
                 min_max_ax.plot(x_vals[1:], max_vals[1:], linestyle='dotted', alpha=0.5)
@@ -227,6 +247,9 @@ def main():
             elif group_name == 'aflfast':
                 mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dashdot', color='xkcd:olive yellow')
                 mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], facecolor='xkcd:olive yellow', alpha=0.2)
+            elif group_name == 'afl':
+                mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name, linestyle='dotted', color='xkcd:slate grey')
+                mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], facecolor='xkcd:slate grey', alpha=0.2)
             else:
                 mix_ax.plot(x_vals[1:], y_vals[1:], label=group_name)
                 mix_ax.fill_between(x_vals[1:], min_vals[1:], max_vals[1:], alpha=0.2)
@@ -238,6 +261,11 @@ def main():
             for did in target_detail:
                 details = target_detail[did]
                 max_bin = len(details)
+
+                if config['limit'] is not None:
+                    if max_bin > config['limit']:
+                        max_bin = config['limit']
+
                 x_vals = []
                 y_vals = []
                 for bin_no in range(0, max_bin):
