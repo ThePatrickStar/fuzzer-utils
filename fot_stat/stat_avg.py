@@ -3,7 +3,6 @@ import os
 import sys
 import collections
 import argparse
-from functools import reduce
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -82,27 +81,36 @@ def main():
 
             input_data_list = []
             for data_file in data_files:
-                with open(data_file) as data_fd:
-                    input_data_list.append(json.load(data_fd))
-                    count = len(input_data_list)
+                try:
+                    with open(data_file) as data_fd:
+                        input_data_list.append(json.load(data_fd))
+                except Exception as e:
+                    danger("Failed to load {0}".format(data_file))
+            count = len(input_data_list)
+            if count == 0:
+                danger("No data file has been loaded successfully, skip this target: {0}".format(target_key))
+                continue
 
             # switch [{edge: {5:{},10:{},20:{}}, func:{5:{},10:{},20:{}}, time:{5:{},10:{},20:{}} }]
             # to {edge: { 5: [{}], 10: [{}], 20: [{}] }, func: ..., time: ... }
-            result_dict = { "edge": {}, "func":{}, "time":{}, "rank_nums":{}, "total_bonus":{}, "total_score":{}, "file_len":{}, "edge_num":{}, "func_num":{}}
-            for paramkey in input_data_list[0].keys(): # loop over 'edge' 'func' 'time' 'rank_nums' 'total_bonus' 'total_score'
-                for cycle_num in input_data_list[0][paramkey].keys(): # loop over cycle5, 10, 20
+            result_dict = {"edge": {}, "func": {}, "time": {}, "rank_nums": {}, "total_bonus": {}, "total_score": {},
+                           "file_len": {}, "edge_num": {}, "func_num": {}}
+            # loop over 'edge' 'func' 'time' 'rank_nums' 'total_bonus' 'total_score'
+            for paramkey in input_data_list[0].keys():
+                for cycle_num in input_data_list[0][paramkey].keys():  # loop over cycle5, 10, 20
                     result_dict[paramkey][cycle_num] = collections.OrderedDict()
                     sum_list = [each_dict[paramkey][cycle_num] for each_dict in input_data_list]
                     # if cycle_num not in shared_ranks:
                     #    shared_ranks[cycle_num] = sorted({stoi_helper(each_rank) for each_rank in sum_list[0].keys()}.intersection(*[ {stoi_helper(each_rank) for each_rank in each_dict} for each_dict in sum_list]))
-                    shared_ranks = sorted({stoi_helper(each_rank) for each_rank in sum_list[0].keys()}.intersection(*[ {stoi_helper(each_rank) for each_rank in each_dict} for each_dict in sum_list]))
+                    shared_ranks = sorted({stoi_helper(each_rank) for each_rank in sum_list[0].keys()}.intersection(
+                        *[{stoi_helper(each_rank) for each_rank in each_dict} for each_dict in sum_list]))
                     for index, rank in enumerate(shared_ranks):
                         if rank == -1:
                             shared_ranks[index] = "average"
-                            break;
+                            break
                         elif rank == -2:
                             shared_ranks[index] = "count"
-                            break;
+                            break
                     for each_shared_rank in shared_ranks:
                         sum_of_values = 0
                         for each_dict in sum_list:
