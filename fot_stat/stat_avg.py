@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-import collections
+from collections import OrderedDict
 import argparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -93,12 +93,15 @@ def main():
 
             # switch [{edge: {5:{},10:{},20:{}}, func:{5:{},10:{},20:{}}, time:{5:{},10:{},20:{}} }]
             # to {edge: { 5: [{}], 10: [{}], 20: [{}] }, func: ..., time: ... }
-            result_dict = {"edge": {}, "func": {}, "time": {}, "rank_nums": {}, "total_bonus": {}, "total_score": {},
-                           "file_len": {}, "edge_num": {}, "func_num": {}}
+            result_dict = {"edge": OrderedDict(), "func": OrderedDict(), "time": OrderedDict(),
+                           "rank_nums": OrderedDict(), "total_bonus": OrderedDict(), "total_score": OrderedDict(),
+                           "file_len": OrderedDict(), "edge_num": OrderedDict(), "func_num": OrderedDict()}
             # loop over 'edge' 'func' 'time' 'rank_nums' 'total_bonus' 'total_score'
             for paramkey in input_data_list[0].keys():
-                for cycle_num in input_data_list[0][paramkey].keys():  # loop over cycle5, 10, 20
-                    result_dict[paramkey][cycle_num] = collections.OrderedDict()
+                cycle_numbers = sorted(input_data_list[0][paramkey].keys(), key=lambda x: int(x))
+                log("Checking {0} of cycles {1}".format(paramkey, cycle_numbers))
+                for cycle_num in cycle_numbers:  # loop over cycle5, 10, 20
+                    result_dict[paramkey][cycle_num] = OrderedDict()
                     sum_list = [each_dict[paramkey][cycle_num] for each_dict in input_data_list]
                     # if cycle_num not in shared_ranks:
                     #    shared_ranks[cycle_num] = sorted({stoi_helper(each_rank) for each_rank in sum_list[0].keys()}.intersection(*[ {stoi_helper(each_rank) for each_rank in each_dict} for each_dict in sum_list]))
