@@ -99,8 +99,8 @@ def main():
             # loop over 'edge' 'func' 'time' 'rank_nums' 'total_bonus' 'total_score'
             for paramkey in input_data_list[0].keys():
                 cycle_numbers = sorted(input_data_list[0][paramkey].keys(), key=lambda x: int(x))
-                log("Checking {0} of cycles {1}".format(paramkey, cycle_numbers))
-                for cycle_num in cycle_numbers:  # loop over cycle5, 10, 20
+                log("{0:20} [cycle {1}]".format(paramkey, ",".join(cycle_numbers)))
+                for cycle_num in cycle_numbers:  # loop over cycle5, 10, 20, ...
                     result_dict[paramkey][cycle_num] = OrderedDict()
                     sum_list = [each_dict[paramkey][cycle_num] for each_dict in input_data_list]
                     # if cycle_num not in shared_ranks:
