@@ -4,6 +4,7 @@ import re
 import sys
 import argparse
 from functools import reduce
+from collections import OrderedDict
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -12,14 +13,14 @@ from common_utils import *
 
 
 def sum_of_list(alist):
-    return reduce(lambda x, y: x+y, alist)
+    return reduce(lambda x, y: x + y, alist)
 
 
 def stats():
     arg_parser = argparse.ArgumentParser(description="Statistics of fot.")
-    arg_parser.add_argument('-i', metavar='input',  type=str, nargs="+",
+    arg_parser.add_argument('-i', metavar='input', type=str, nargs="+",
                             help='path to input files.', required=True)
-    arg_parser.add_argument('-o', metavar='ouput',  type=str, required=True,
+    arg_parser.add_argument('-o', metavar='output', type=str, required=True,
                             help='path to directory containing output files.')
     args = arg_parser.parse_args()
 
@@ -40,9 +41,10 @@ def stats():
              according to basename. Abort")
         exit(2)
 
+    cycle_num_line = re.compile("^cycle")
     for filename in args.i:
         if not os.path.isfile(filename):
-            warn("%s not exist, ingore." % path)
+            warn("%s not exist, ingore." % filename)
         else:
             with open(filename, 'r') as f:
                 # edge_cov_dict / func_cov_dict
@@ -58,16 +60,13 @@ def stats():
                 # { '5' : {rank0:0.42, rank1:0.32, ... },
                 #   '10': {rank0:0.42, rank1:0.32, ... },
                 #   '20': {rank0:0.42, rank1:0.32, ... }}
-                edge_cov_dict = {}
-                func_cov_dict = {}
-                rank_nums_dict = {}
-                simple_data_dict = {"time":{}, "total_bonus":{}, "total_score":{}, "file_len":{}, "edge_num":{}, "func_num":{}}
-                time_dict = {}
-                total_bonus_dict = {}
-                total_score_dict = {}
+                edge_cov_dict = OrderedDict()
+                func_cov_dict = OrderedDict()
+                simple_data_dict = {"time": {}, "total_bonus": {}, "total_score": {}, "file_len": {}, "edge_num": {},
+                                    "func_num": {}}
                 cycle_seq = 0
                 for line in f.readlines():
-                    if re.search("^cycle", line):
+                    if cycle_num_line.search(line):
                         cycle_seq = line.split('-')[1].rstrip()
                         edge_cov_dict[cycle_seq] = dict()
                         func_cov_dict[cycle_seq] = dict()
@@ -81,15 +80,15 @@ def stats():
                         edge_set = set(single_testcase["exec"]["deputy_trace"]["inner"])
                         func_set = set(single_testcase["exec"]["func_stats"]["covered_funcs"])
                         single_value_dict = {
-                        "time": single_testcase["exec"]["us"],
-                        "file_len": single_testcase["file"]["len"],
-                        "total_bonus": single_testcase["exec"]["func_stats"]["total_bonus"],
-                        "total_score": single_testcase["exec"]["func_stats"]["total_score"],
-                        "edge_num": len(edge_set), "func_num": len(func_set)}
+                            "time": single_testcase["exec"]["us"],
+                            "file_len": single_testcase["file"]["len"],
+                            "total_bonus": single_testcase["exec"]["func_stats"]["total_bonus"],
+                            "total_score": single_testcase["exec"]["func_stats"]["total_score"],
+                            "edge_num": len(edge_set), "func_num": len(func_set)}
 
-                        if rank in edge_cov_dict[cycle_seq] :
-                            edge_cov_dict[cycle_seq][rank]|=(edge_set)
-                            func_cov_dict[cycle_seq][rank]|=(func_set)
+                        if rank in edge_cov_dict[cycle_seq]:
+                            edge_cov_dict[cycle_seq][rank] |= edge_set
+                            func_cov_dict[cycle_seq][rank] |= func_set
 
                             for paramkey in simple_data_dict.keys():
                                 simple_data_dict[paramkey][cycle_seq][rank].append(single_value_dict[paramkey])
@@ -136,35 +135,42 @@ def stats():
                 #                  20: {rank0: 213, rank1: 102, ..., count:3991}}
                 #
                 # }
-                result={"edge": {}, "func":{}, "file_len":{}, "time":{}, "rank_nums":{}, "total_bonus":{}, "total_score":{}, "edge_num":{}, "func_num":{} }
-                count_edges = count_funcs = 0
-                for key in edge_cov_dict: # iterate over cycles
-
-                    all_edges=set()
+                result = {"edge": OrderedDict(), "func": OrderedDict(), "file_len": OrderedDict(),
+                          "time": OrderedDict(), "rank_nums": OrderedDict(), "total_bonus": OrderedDict(),
+                          "total_score": OrderedDict(), "edge_num": OrderedDict(), "func_num": OrderedDict()}
+                for key in edge_cov_dict:  # iterate over cycles
+                    all_edges = set()
                     for e_set in edge_cov_dict[key].values():
                         all_edges |= e_set
                     count_edges = len(all_edges)
-                    result["edge"][key] = dict((rank,round(len(e_set)/count_edges,4)) for rank, e_set in edge_cov_dict[key].items())
+                    result["edge"][key] = dict(
+                        (rank, round(len(e_set) / count_edges, 4)) for rank, e_set in edge_cov_dict[key].items())
 
-                    all_funcs=set()
+                    all_funcs = set()
                     for f_set in func_cov_dict[key].values():
                         all_funcs |= f_set
                     count_funcs = len(all_funcs)
-                    result["func"][key] = dict((rank, round(len(f_set)/count_funcs,4)) for rank, f_set in func_cov_dict[key].items())
+                    result["func"][key] = dict(
+                        (rank, round(len(f_set) / count_funcs, 4)) for rank, f_set in func_cov_dict[key].items())
 
                     for paramkey in simple_data_dict.keys():
-                        result[paramkey][key] = dict((rank, round(sum_of_list(list_of_a_rank)/len(list_of_a_rank))) for rank, list_of_a_rank in simple_data_dict[paramkey][key].items())
+                        result[paramkey][key] = dict(
+                            (rank, round(sum_of_list(list_of_a_rank) / len(list_of_a_rank))) for rank, list_of_a_rank in
+                            simple_data_dict[paramkey][key].items())
 
-                    result['rank_nums'][key] = dict((rank, len(timelist_of_a_rank)) for rank, timelist_of_a_rank in simple_data_dict["time"][key].items())
+                    result['rank_nums'][key] = dict((rank, len(timelist_of_a_rank)) for rank, timelist_of_a_rank in
+                                                    simple_data_dict["time"][key].items())
                     result['rank_nums'][key]['count'] = sum_of_list(result['rank_nums'][key].values())
 
                     # add average
                     for paramkey in simple_data_dict.keys():
-                        result[paramkey][key]["average"] =  round(sum_of_list([result[paramkey][key][rank] * result["rank_nums"][key][rank] for rank in result[paramkey][key] ]) / result["rank_nums"][key]["count"])
+                        result[paramkey][key]["average"] = round(sum_of_list(
+                            [result[paramkey][key][rank] * result["rank_nums"][key][rank] for rank in
+                             result[paramkey][key]]) / result["rank_nums"][key]["count"])
 
                 # write to files
                 result_json_filename = args.o + '/' + os.path.splitext(os.path.basename(filename))[0] + '.json'
-                with open (result_json_filename, 'w') as result_json_file:
+                with open(result_json_filename, 'w') as result_json_file:
                     json.dump(result, result_json_file)
 
 
