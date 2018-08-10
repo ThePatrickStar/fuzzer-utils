@@ -95,6 +95,7 @@ class Worker(threading.Thread):
                 danger("skipping invalid target", 1)
                 continue
 
+            bin_limit = (3600/self.bucket_margin) * int(self.config['max_span'])
             entries = []
             entry_dirs = target['entry_dirs']
             # collect entry files first
@@ -112,6 +113,9 @@ class Worker(threading.Thread):
                             # bin_no = int((entry_mtime - start_time) / self.bucket_margin)
 
                             entry = Entry(entry_file, entry_mtime, 0)
+
+                            if entry.bin_no > bin_limit:
+                                continue
 
                             entries.append(entry)
 
