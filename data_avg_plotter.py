@@ -129,6 +129,9 @@ def main():
                         tokens = line.split(',')
                         bin_no = int(tokens[0])
                         edge_no = int(tokens[1])
+                        if bin_no > config['limit']:
+                            ok("%s: %d" % (data_file, edge_no), 1)
+                            break
                         if bin_no != i+1:
                             danger("invalid file - bin_no(%d), line_no(%d)" % (bin_no, i), 1)
                             sys.exit(1)
